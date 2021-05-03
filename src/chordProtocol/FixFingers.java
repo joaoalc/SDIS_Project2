@@ -1,0 +1,28 @@
+package chordProtocol;
+
+public class FixFingers implements Runnable {
+
+    private Node node;
+
+    public FixFingers(Node n){
+        node = n;
+    }
+
+    @Override
+    public void run() {
+        for (int next = 0; next < Node.M; next++){
+            int successorToFindId = (node.getId() + (int) Math.pow(2, next-1)) % (int) Math.pow(2, Node.M);
+
+            // Find successor of id successorToFindId and update the corresponding finger
+            FingerTableEntry successor = node.findSuccessor(successorToFindId);
+            if (successor == null){
+                System.out.println("Error fixing fingers [successor is null].");
+                System.out.println("Current node: " + node.getId() + ".  Target Node: " + successor.getId() + ".");
+                return;
+            }
+
+            node.setFinger(next, successor);
+        }
+
+    }
+}

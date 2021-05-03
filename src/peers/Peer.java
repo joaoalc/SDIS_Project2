@@ -1,21 +1,30 @@
 package peers;
 
+import chordProtocol.CheckPredecessorFailure;
+import chordProtocol.FixFingers;
+import chordProtocol.Node;
+import chordProtocol.Stabilization;
+import messages.MessageReceiver;
+
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-public class Peer{
+public class Peer extends Node {
 
-    private MessageSender sender;
-    private MessageReceiver receiver;
     private int port;
+    private String address;
 
-    public Peer(int port){
+    public Peer(String address, int port){
+        super(new InetSocketAddress("localhost", port));
+        this.address = "localhost";
         this.port = port;
-        sender = new MessageSender();
-        receiver = new MessageReceiver(this.port);
     }
 
-    public MessageReceiver getReceiver(){
-        return receiver;
+    public int getPort(){
+        return port;
     }
 
     public static void main(String[] args){
@@ -24,13 +33,30 @@ public class Peer{
             System.out.println("Usage: java Peer <port> <action>");
         }
 
-        int port = Integer.parseInt(args[0]);
-        String action = args[1];
+        String address = args[0];
+        int port = Integer.parseInt(args[1]);
+        String action = args[2];
 
-        Peer p = new Peer(port);
+        Peer p = new Peer(address, port);
 
         System.out.println("Peer");
 
+        Executor executor = Executors.newSingleThreadExecutor();
+        executor.execute(new MessageReceiver(p.getPort()));
+
+        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(3);
+
+        Stabilization stabilization = new Stabilization(p);
+        scheduledExecutor.scheduleAtFixedRate(stabilization, 1, 20, TimeUnit.SECONDS);
+
+        FixFingers fixFingers = new FixFingers(p);
+        scheduledExecutor.scheduleAtFixedRate(fixFingers, 1, 20, TimeUnit.SECONDS);
+
+        CheckPredecessorFailure checkPredecessorFailure = new CheckPredecessorFailure(p);
+        scheduledExecutor.scheduleAtFixedRate(checkPredecessorFailure, 1, 20, TimeUnit.SECONDS);
+
+
+        /*
         if (action.equals("RECEIVE")){
             Thread t = new Thread(p.getReceiver());
             t.start();
@@ -39,6 +65,7 @@ public class Peer{
             String answer = p.sender.sendWithAnswer("Message test", address);
             System.out.println("Answer: " + answer);
         }
+        */
         
     }
 

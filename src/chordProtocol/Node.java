@@ -1,5 +1,9 @@
 package chordProtocol;
 
+import messages.Message;
+import messages.MessageSender;
+import messages.MessageType;
+
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -8,20 +12,38 @@ import java.util.UUID;
 
 public class Node {
 
-    private static final int M = 5;
+    public static final int M = 5;
     private FingerTableEntry[] fingerTable;
     private int id;
-    private InetSocketAddress address;
-    private InetSocketAddress predecessor;
+    protected InetSocketAddress address;
+    private FingerTableEntry predecessor;
+    private MessageSender sender;
 
     public Node(InetSocketAddress address){
         this.address = address;
-        this.id = getId();
+        this.id = generateId();
         fingerTable = new FingerTableEntry[M];
         this.predecessor = null;
+        this.sender = new MessageSender();
     }
 
-    private int getId(){
+    public MessageSender getSender(){
+        return sender;
+    }
+
+    public FingerTableEntry getPredecessor(){
+        return predecessor;
+    }
+
+    public void resetPredecessor(){
+        predecessor = null;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    private int generateId(){
         int port = this.address.getPort();
         String addr = this.address.getAddress().toString();
         String toHash = addr + ":" + port;
@@ -48,15 +70,15 @@ public class Node {
         }
     }
 
-    private boolean setFinger(int idx, InetSocketAddress value){
+    public boolean setFinger(int idx, FingerTableEntry entry){
         if (idx < 0 || idx >= M){
             return false;
         }
-        fingerTable[idx].setValue(value);
+        fingerTable[idx] = entry;
         return true;
     }
 
-    private FingerTableEntry getFinger(int idx) throws RuntimeException {
+    public FingerTableEntry getFinger(int idx) throws RuntimeException {
         if (idx < 0 || idx >= M){
             throw new RuntimeException("Finger Table index out of bounds");
         }
@@ -74,21 +96,36 @@ public class Node {
         return address;
     }
 
-    public InetSocketAddress findSuccessor(int id){
+    public FingerTableEntry findSuccessor(int id){
         FingerTableEntry successor = getFinger(0);
         if (this.id < id && id < successor.getId()){
-            return successor.getValue();
+            return successor;
         } else {
             InetSocketAddress closest = closestNode(id);
             // Send message to closest node to find successor
 
-            return ;
+            Message m = new Message(MessageType.FIND_SUCCESSOR, id);
+            Message ans = sender.sendWithAnswer(m, closest);
+
+            if (!ans.isSuccessorMessage()){
+                System.out.println("Error on finding successor [Message doesn't match expected type].");
+                System.out.println("Current node: " + this.id + ".  Target Node: " + id + ".");
+                return null;
+            }
+
+            if (!ans.hasData()){
+                System.out.println("Error on finding successor [Successor is null].");
+                System.out.println("Current node: " + this.id + ".  Target Node: " + id + ".");
+                return null;
+            }
+
+            return ans.getData();
         }
     }
 
     private void createNewChordRing(){
         this.predecessor = null;
-        this.setFinger(0, address);
+        this.setFinger(0, new FingerTableEntry(this.id, this.address));
     }
 
     private void joinExistingChordRing(InetSocketAddress peerFromRingAddress){
@@ -97,8 +134,29 @@ public class Node {
         // Enviar mensagem ao peerFromRingAddress a dizer para encontrar o successor deste node
         // successor = n'.find_successor(n)
 
-        setFinger(0, );
+        Message m = new Message(MessageType.FIND_SUCCESSOR, this.id);
+        Message ans = sender.sendWithAnswer(m, peerFromRingAddress);
 
+        if (!ans.isSuccessorMessage()){
+            System.out.println("Error on joining ring [Message doesn't match expected type].");
+            return;
+        }
+
+        if (!ans.hasData()){
+            System.out.println("Error on joining ring [Successor is null].");
+            return;
+        }
+
+        FingerTableEntry successor = ans.getData();
+        setFinger(0, successor);
+
+    }
+
+    private void whenNotified(FingerTableEntry node){
+        int id = node.getId();
+        if (predecessor == null || (id > predecessor.getId() && id < this.id)){
+            this.predecessor = node;
+        }
     }
 
 }

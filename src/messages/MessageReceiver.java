@@ -1,13 +1,17 @@
-package peers;
+package messages;
 
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import java.io.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class MessageReceiver implements Runnable {
 
     private SSLServerSocket s;
+    private ExecutorService executor;
 
     public MessageReceiver(int port){
         try{
@@ -17,6 +21,7 @@ public class MessageReceiver implements Runnable {
         } catch (IOException e){
             e.printStackTrace();
         }
+        executor = Executors.newFixedThreadPool(10);
     }
 
     public String receive(){
@@ -27,6 +32,7 @@ public class MessageReceiver implements Runnable {
             ObjectInputStream in = new ObjectInputStream(sslSocket.getInputStream());
             try{
                 Message m = (Message) in.readObject();
+                System.out.println("Received message.");
                 System.out.println("Message: " + m.getMessage());
             } catch (ClassNotFoundException e){
                 e.printStackTrace();
