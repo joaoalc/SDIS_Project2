@@ -12,61 +12,79 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class Peer extends Node {
+/*
+Client:
+java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer 8000 SEND
+
+Server:
+
+
+ */
+
+public class Peer {
 
     private int port;
     private String address;
+    private Node node;
 
     public Peer(String address, int port){
-        super(new InetSocketAddress("localhost", port));
-        this.address = "localhost";
+        this.address = address;
         this.port = port;
+        node = new Node(new InetSocketAddress(address, port));
     }
 
     public int getPort(){
         return port;
     }
 
+    public Node getNode(){
+        return node;
+    }
+
+    public void start(){
+
+        Executor executor = Executors.newSingleThreadExecutor();
+        executor.execute(new MessageReceiver(port, node));
+
+        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(3);
+
+        Stabilization stabilization = new Stabilization(node);
+        scheduledExecutor.scheduleAtFixedRate(stabilization, 1, 10, TimeUnit.SECONDS);
+
+
+        FixFingers fixFingers = new FixFingers(node);
+        scheduledExecutor.scheduleAtFixedRate(fixFingers, 1, 10, TimeUnit.SECONDS);
+
+
+        CheckPredecessorFailure checkPredecessorFailure = new CheckPredecessorFailure(node);
+        scheduledExecutor.scheduleAtFixedRate(checkPredecessorFailure, 1, 10, TimeUnit.SECONDS);
+
+    }
+
     public static void main(String[] args){
 
-        if (args.length != 2){
-            System.out.println("Usage: java Peer <port> <action>");
+        System.out.println(args.length);
+        if (args.length != 2 && args.length != 4){
+            System.out.println("Usage: java Peer <address> <port> [<chord_peer_address> <chord_peer_port>]");
+            return;
         }
 
         String address = args[0];
         int port = Integer.parseInt(args[1]);
-        String action = args[2];
 
         Peer p = new Peer(address, port);
 
         System.out.println("Peer");
+        p.start();
 
-        Executor executor = Executors.newSingleThreadExecutor();
-        executor.execute(new MessageReceiver(p.getPort()));
-
-        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(3);
-
-        Stabilization stabilization = new Stabilization(p);
-        scheduledExecutor.scheduleAtFixedRate(stabilization, 1, 20, TimeUnit.SECONDS);
-
-        FixFingers fixFingers = new FixFingers(p);
-        scheduledExecutor.scheduleAtFixedRate(fixFingers, 1, 20, TimeUnit.SECONDS);
-
-        CheckPredecessorFailure checkPredecessorFailure = new CheckPredecessorFailure(p);
-        scheduledExecutor.scheduleAtFixedRate(checkPredecessorFailure, 1, 20, TimeUnit.SECONDS);
-
-
-        /*
-        if (action.equals("RECEIVE")){
-            Thread t = new Thread(p.getReceiver());
-            t.start();
-        } else {
-            InetSocketAddress address = new InetSocketAddress("localhost", 8001);
-            String answer = p.sender.sendWithAnswer("Message test", address);
-            System.out.println("Answer: " + answer);
+        if (args.length == 2){
+            p.getNode().createNewChordRing();
+        } else if (args.length == 4){
+            String peerFromRingAddress = args[2];
+            int peerFromRingPort = Integer.parseInt(args[3]);
+            p.getNode().joinExistingChordRing(new InetSocketAddress(peerFromRingAddress, peerFromRingPort));
         }
-        */
-        
+
     }
 
 

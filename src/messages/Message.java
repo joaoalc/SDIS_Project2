@@ -28,8 +28,18 @@ public class Message implements Serializable {
         id = -1;
     }
 
+    public Message(MessageType type, FingerTableEntry data, int id){
+        this.type = type;
+        this.data = data;
+        this.id = id;
+    }
+
     public boolean hasData(){
         return data != null;
+    }
+
+    public MessageType getType(){
+        return type;
     }
 
     public int getId() {

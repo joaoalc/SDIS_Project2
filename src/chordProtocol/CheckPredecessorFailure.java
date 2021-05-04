@@ -1,7 +1,5 @@
 package chordProtocol;
 
-import messages.AliveMessage;
-import messages.CheckMessage;
 import messages.Message;
 import messages.MessageType;
 
@@ -16,9 +14,11 @@ public class CheckPredecessorFailure implements Runnable {
     @Override
     public void run() {
 
+        System.out.println("---------- Check Predecessor Failure -------------");
         // Send message to predecessor to check if it is alive
         FingerTableEntry predecessor = node.getPredecessor();
         if (predecessor == null){
+            System.out.println("-----------------------------");
             return;
         }
 
@@ -33,6 +33,8 @@ public class CheckPredecessorFailure implements Runnable {
             System.out.println("Current node: " + node.getId() + ".  Target Node: " + predecessor.getId() + ".");
             return;
         }
+
+        System.out.println("-----------------------------");
 
     }
 }

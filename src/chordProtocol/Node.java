@@ -4,6 +4,7 @@ import messages.Message;
 import messages.MessageSender;
 import messages.MessageType;
 
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -15,16 +16,30 @@ public class Node {
     public static final int M = 5;
     private FingerTableEntry[] fingerTable;
     private int id;
-    protected InetSocketAddress address;
+    private FingerTableEntry thisEntry;
     private FingerTableEntry predecessor;
     private MessageSender sender;
 
     public Node(InetSocketAddress address){
-        this.address = address;
-        this.id = generateId();
+        this.id = generateId(address);
+        System.out.println("Node id: " + this.id);
+        thisEntry = new FingerTableEntry(this.id, address);
         fingerTable = new FingerTableEntry[M];
         this.predecessor = null;
         this.sender = new MessageSender();
+        initFingerTable();
+    }
+
+    public void displayFingerTable(){
+        System.out.println("------ Finger Table ----------");
+        for (int i = 0; i < M; i++){
+            System.out.println("Entry " + i + ": " + fingerTable[i].getId());
+        }
+        System.out.println("------------------------------");
+    }
+
+    public FingerTableEntry getEntry(){
+        return thisEntry;
     }
 
     public MessageSender getSender(){
@@ -43,9 +58,9 @@ public class Node {
         return id;
     }
 
-    private int generateId(){
-        int port = this.address.getPort();
-        String addr = this.address.getAddress().toString();
+    private int generateId(InetSocketAddress address){
+        int port = address.getPort();
+        String addr = address.toString();
         String toHash = addr + ":" + port;
         String hashed = "";
         try{
@@ -61,7 +76,12 @@ public class Node {
             e.printStackTrace();
         }
 
-        return UUID.nameUUIDFromBytes(hashed.getBytes(StandardCharsets.UTF_8)).hashCode() % (int) Math.pow(2, M);
+        System.out.println("Generate id power: " + (int) Math.pow(2, M));
+        UUID uuid = UUID.nameUUIDFromBytes(hashed.getBytes(StandardCharsets.UTF_8));
+        System.out.println("Generate id uuid: " + uuid);
+        int id = Math.floorMod(uuid.hashCode(), (int) Math.pow(2, M)); // uuid.hashCode() % (int) Math.pow(2, M);
+        System.out.println("Id: " + id);
+        return id;
     }
 
     private void initFingerTable(){
@@ -85,27 +105,33 @@ public class Node {
         return fingerTable[idx];
     }
 
-    private InetSocketAddress closestNode(int id){
-        for (int i = M-1; i >= 0; i--){
+    private FingerTableEntry closestNode(int id){
+        for (int i = M-1; i > 0; i--){
             FingerTableEntry entry = getFinger(i);
             int entryId = entry.getId();
             if (entryId > this.id && entryId < id){
-                return entry.getValue();
+                return entry;
             }
         }
-        return address;
+        return thisEntry;
     }
 
     public FingerTableEntry findSuccessor(int id){
         FingerTableEntry successor = getFinger(0);
-        if (this.id < id && id < successor.getId()){
+        System.out.println("Find SUCCESSOR: target_id = " + id + "; node_id = " + this.id + "; Successor id = " + successor.getId() + ";");
+        if (this.id < id && id <= successor.getId()){
+            System.out.println("Inside");
             return successor;
         } else {
-            InetSocketAddress closest = closestNode(id);
-            // Send message to closest node to find successor
+            FingerTableEntry closest = closestNode(id);
+            if (closest.equals(thisEntry)){
+                System.out.println("Closest is equal to this node!");
+                return thisEntry;
+            }
 
+            // Send message to closest node to find successor
             Message m = new Message(MessageType.FIND_SUCCESSOR, id);
-            Message ans = sender.sendWithAnswer(m, closest);
+            Message ans = sender.sendWithAnswer(m, closest.getValue());
 
             if (!ans.isSuccessorMessage()){
                 System.out.println("Error on finding successor [Message doesn't match expected type].");
@@ -123,19 +149,25 @@ public class Node {
         }
     }
 
-    private void createNewChordRing(){
+    public void createNewChordRing(){
         this.predecessor = null;
-        this.setFinger(0, new FingerTableEntry(this.id, this.address));
+        this.setFinger(0, thisEntry);
     }
 
-    private void joinExistingChordRing(InetSocketAddress peerFromRingAddress){
+    public void joinExistingChordRing(InetSocketAddress peerFromRingAddress){
         this.predecessor = null;
 
         // Enviar mensagem ao peerFromRingAddress a dizer para encontrar o successor deste node
         // successor = n'.find_successor(n)
 
         Message m = new Message(MessageType.FIND_SUCCESSOR, this.id);
+        System.out.println("Sending FIND SUCCESSOR message to " + peerFromRingAddress.getAddress() + ":" + peerFromRingAddress.getPort());
         Message ans = sender.sendWithAnswer(m, peerFromRingAddress);
+
+        if (ans == null){
+            System.out.println("Error on joining ring [Answer is null].");
+            return;
+        }
 
         if (!ans.isSuccessorMessage()){
             System.out.println("Error on joining ring [Message doesn't match expected type].");
@@ -148,11 +180,13 @@ public class Node {
         }
 
         FingerTableEntry successor = ans.getData();
+        System.out.println("Successor found! " + successor.getId());
         setFinger(0, successor);
+        System.out.println("Actual Successor: " + getFinger(0).getId());
 
     }
 
-    private void whenNotified(FingerTableEntry node){
+    public void whenNotified(FingerTableEntry node){
         int id = node.getId();
         if (predecessor == null || (id > predecessor.getId() && id < this.id)){
             this.predecessor = node;

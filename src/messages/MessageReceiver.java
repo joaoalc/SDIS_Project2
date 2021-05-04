@@ -1,19 +1,21 @@
 package messages;
 
+import chordProtocol.Node;
+
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class MessageReceiver implements Runnable {
 
     private SSLServerSocket s;
     private ExecutorService executor;
+    private Node node;
 
-    public MessageReceiver(int port){
+    public MessageReceiver(int port, Node n){
         try{
             s = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
             s.setNeedClientAuth(true);
@@ -22,41 +24,22 @@ public class MessageReceiver implements Runnable {
             e.printStackTrace();
         }
         executor = Executors.newFixedThreadPool(10);
+        node = n;
     }
 
-    public String receive(){
+    public void receiveConnection(){
         try{
             SSLSocket sslSocket = (SSLSocket) s.accept();
-            System.out.println("Address: " + sslSocket.getInetAddress().getHostAddress());
-
-            ObjectInputStream in = new ObjectInputStream(sslSocket.getInputStream());
-            try{
-                Message m = (Message) in.readObject();
-                System.out.println("Received message.");
-                System.out.println("Message: " + m.getMessage());
-            } catch (ClassNotFoundException e){
-                e.printStackTrace();
-            }
-            System.out.println("Reader ready");
-            System.out.println("Reader finished");
-            Message m = new Message("Resposta");
-            ObjectOutputStream out = new ObjectOutputStream(sslSocket.getOutputStream());
-            out.writeObject(m);
-            System.out.println("Wrote answer");
-            sslSocket.close();
-        } catch(IOException e){
+            executor.submit(new HandleConnection(sslSocket, node));
+        } catch (IOException e){
             e.printStackTrace();
-            return "";
         }
-
-
-        return "";
     }
 
     public void run(){
 
         while(true){
-            receive();
+            receiveConnection();
         }
 
     }

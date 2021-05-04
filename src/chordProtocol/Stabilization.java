@@ -13,6 +13,7 @@ public class Stabilization implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("------- Stabilization ---------");
         // Ask successor for its predecessor and put it in the x variable
         FingerTableEntry succ = node.getFinger(0);
 
@@ -26,10 +27,16 @@ public class Stabilization implements Runnable {
         }
 
         if (!ans.hasData()){
+            System.out.println("No data");
             return;
         }
 
         FingerTableEntry x = ans.getData();
+
+        if (x == null){
+            System.out.println("X is null");
+            return;
+        }
 
         int id = x.getId();
 
@@ -38,7 +45,7 @@ public class Stabilization implements Runnable {
         }
 
         // Notify successor
-        Message nm = new Message(MessageType.NOTIFICATION);
+        Message nm = new Message(MessageType.NOTIFICATION, node.getEntry());
         ans = node.getSender().sendWithAnswer(nm, succ.getValue());
 
         if (!ans.isNotifiedMessage()){
@@ -46,6 +53,8 @@ public class Stabilization implements Runnable {
             System.out.println("Current node: " + node.getId() + ".  Target Node: " + succ.getId() + ".");
             return;
         }
+
+        System.out.println("----------------------");
 
     }
 }
