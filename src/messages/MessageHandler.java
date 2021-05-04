@@ -45,6 +45,14 @@ public class MessageHandler {
                 System.out.println("Received CHECK");
                 handleCheck();
                 break;
+            case JOIN:
+                System.out.println("Received JOIN");
+                if (!message.hasData()){
+                    throw new RuntimeException("Data not set on join");
+                }
+                FingerTableEntry entry = message.getData();
+                handleJoin(entry);
+                break;
             default:
                 System.out.println("DEFAULT");
                 break;
@@ -78,10 +86,26 @@ public class MessageHandler {
 
     private void handleNotification(FingerTableEntry n){
         node.whenNotified(n);
+        Message answer = new Message(MessageType.NOTIFIED);
+        try{
+            sendAnswer(answer);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
     private void handleCheck(){
         Message answer = new Message(MessageType.ALIVE);
+        try{
+            sendAnswer(answer);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void handleJoin(FingerTableEntry entry){
+        FingerTableEntry successor = node.findSuccessor(entry.getId());
+        Message answer = new Message(MessageType.SUCCESSOR, successor, entry.getId());
         try{
             sendAnswer(answer);
         } catch (IOException e){

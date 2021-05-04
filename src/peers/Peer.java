@@ -53,11 +53,11 @@ public class Peer {
 
 
         FixFingers fixFingers = new FixFingers(node);
-        scheduledExecutor.scheduleAtFixedRate(fixFingers, 1, 10, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleAtFixedRate(fixFingers, 2, 10, TimeUnit.SECONDS);
 
 
         CheckPredecessorFailure checkPredecessorFailure = new CheckPredecessorFailure(node);
-        scheduledExecutor.scheduleAtFixedRate(checkPredecessorFailure, 1, 10, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleAtFixedRate(checkPredecessorFailure, 3, 10, TimeUnit.SECONDS);
 
     }
 

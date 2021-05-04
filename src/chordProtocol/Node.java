@@ -36,6 +36,12 @@ public class Node {
             System.out.println("Entry " + i + ": " + fingerTable[i].getId());
         }
         System.out.println("------------------------------");
+        if (predecessor != null){
+            System.out.println("Predecessor!!");
+            System.out.println(predecessor.getId());
+        } else {
+            System.out.println("Predecessor is null!!");
+        }
     }
 
     public FingerTableEntry getEntry(){
@@ -52,6 +58,10 @@ public class Node {
 
     public void resetPredecessor(){
         predecessor = null;
+    }
+
+    public void setPredecessor(FingerTableEntry entry){
+        predecessor = entry;
     }
 
     public int getId() {
@@ -160,8 +170,8 @@ public class Node {
         // Enviar mensagem ao peerFromRingAddress a dizer para encontrar o successor deste node
         // successor = n'.find_successor(n)
 
-        Message m = new Message(MessageType.FIND_SUCCESSOR, this.id);
-        System.out.println("Sending FIND SUCCESSOR message to " + peerFromRingAddress.getAddress() + ":" + peerFromRingAddress.getPort());
+        Message m = new Message(MessageType.JOIN, this.thisEntry);
+        System.out.println("Sending JOIN message to " + peerFromRingAddress.getAddress() + ":" + peerFromRingAddress.getPort());
         Message ans = sender.sendWithAnswer(m, peerFromRingAddress);
 
         if (ans == null){
@@ -187,10 +197,19 @@ public class Node {
     }
 
     public void whenNotified(FingerTableEntry node){
+        if (node.equals(thisEntry)){
+            return;
+        }
+        System.out.println("Notified!!!!");
         int id = node.getId();
-        if (predecessor == null || (id > predecessor.getId() && id < this.id)){
+        System.out.println("Id received in notification: " + id);
+        System.out.println("Current node id: " + this.id);
+        if (predecessor == null){
+            this.predecessor = node;
+        } else if (Helper.between(predecessor.getId(), id, this.id)){
             this.predecessor = node;
         }
+
     }
 
 }

@@ -28,6 +28,7 @@ public class FixFingers implements Runnable {
         System.out.println("-----------------------");
 
         node.displayFingerTable();
+        //System.out.println("Predecessor: " + node.getPredecessor().getId());
 
     }
 }

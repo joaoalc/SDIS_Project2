@@ -8,5 +8,6 @@ public enum MessageType {
     NOTIFICATION,
     NOTIFIED,
     PREDECESSOR,
-    SUCCESSOR
+    SUCCESSOR,
+    JOIN
 }

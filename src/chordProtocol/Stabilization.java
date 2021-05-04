@@ -28,20 +28,19 @@ public class Stabilization implements Runnable {
 
         if (!ans.hasData()){
             System.out.println("No data");
-            return;
-        }
+        } else {
+            FingerTableEntry x = ans.getData();
 
-        FingerTableEntry x = ans.getData();
+            if (x == null){
+                System.out.println("X is null");
+                return;
+            }
 
-        if (x == null){
-            System.out.println("X is null");
-            return;
-        }
+            int id = x.getId();
 
-        int id = x.getId();
-
-        if (id > node.getId() && id < succ.getId()){
-            node.setFinger(0, x);
+            if (Helper.between(node.getId(), id, succ.getId())){
+                node.setFinger(0, x);
+            }
         }
 
         // Notify successor
