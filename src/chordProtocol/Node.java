@@ -4,7 +4,6 @@ import messages.Message;
 import messages.MessageSender;
 import messages.MessageType;
 
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -32,8 +31,8 @@ public class Node {
 
     public void displayFingerTable(){
         System.out.println("------ Finger Table ----------");
-        for (int i = 0; i < M; i++){
-            System.out.println("Entry " + i + ": " + fingerTable[i].getId());
+        for (int i = 1; i <= M; i++){
+            System.out.println("Entry " + (i-1) + ", of node " + (this.id + (int) Math.pow(2, i-1)) % (int) Math.pow(2, Node.M) + ": " + fingerTable[i-1].getId());
         }
         System.out.println("------------------------------");
         if (predecessor != null){
@@ -116,10 +115,11 @@ public class Node {
     }
 
     private FingerTableEntry closestNode(int id){
-        for (int i = M-1; i > 0; i--){
+        for (int i = M-1; i >= 0; i--){
             FingerTableEntry entry = getFinger(i);
             int entryId = entry.getId();
-            if (entryId > this.id && entryId < id){
+            if (Helper.between(this.id, entryId, id)){
+            //if (entryId > this.id && entryId < id){
                 return entry;
             }
         }
@@ -129,11 +129,13 @@ public class Node {
     public FingerTableEntry findSuccessor(int id){
         FingerTableEntry successor = getFinger(0);
         System.out.println("Find SUCCESSOR: target_id = " + id + "; node_id = " + this.id + "; Successor id = " + successor.getId() + ";");
-        if (this.id < id && id <= successor.getId()){
+        if (Helper.between(this.id, id, successor.getId()) || id == successor.getId()){
+        //if (this.id < id && id <= successor.getId()){
             System.out.println("Inside");
             return successor;
         } else {
             FingerTableEntry closest = closestNode(id);
+            System.out.println("Closest Node: " + closest.getId());
             if (closest.equals(thisEntry)){
                 System.out.println("Closest is equal to this node!");
                 return thisEntry;
@@ -141,7 +143,9 @@ public class Node {
 
             // Send message to closest node to find successor
             Message m = new Message(MessageType.FIND_SUCCESSOR, id);
+            System.out.println("Sending find successor message to node with id " + closest.getId() + " and address " + closest.getValue());
             Message ans = sender.sendWithAnswer(m, closest.getValue());
+            System.out.println("Received successor response");
 
             if (!ans.isSuccessorMessage()){
                 System.out.println("Error on finding successor [Message doesn't match expected type].");

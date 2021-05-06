@@ -74,6 +74,7 @@ public class MessageHandler {
     }
 
     private void handleFindSuccessor(int id){
+        System.out.println("RECEIVED FIND SUCCESSOR MESSAGE!!");
         FingerTableEntry successor = node.findSuccessor(id);
         Message answer = new Message(MessageType.SUCCESSOR, successor, id);
         try{
