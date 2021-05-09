@@ -103,6 +103,9 @@ public class Node {
         if (idx < 0 || idx >= M){
             return false;
         }
+        if (entry == null){
+            entry = new FingerTableEntry(-1, null);
+        }
         fingerTable[idx] = entry;
         return true;
     }
@@ -146,6 +149,11 @@ public class Node {
             System.out.println("Sending find successor message to node with id " + closest.getId() + " and address " + closest.getValue());
             Message ans = sender.sendWithAnswer(m, closest.getValue());
             System.out.println("Received successor response");
+
+            if (ans == null){
+                System.out.println("Answer is null!!!!!!!!!!!!!!!!!!!!!!");
+                return null;
+            }
 
             if (!ans.isSuccessorMessage()){
                 System.out.println("Error on finding successor [Message doesn't match expected type].");

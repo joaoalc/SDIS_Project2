@@ -32,6 +32,7 @@ public class MessageSender {
                 answer = (Message) in.readObject();
             } catch(ClassNotFoundException e){
                 e.printStackTrace();
+                return null;
             }
             s.close();
         } catch (IOException e){

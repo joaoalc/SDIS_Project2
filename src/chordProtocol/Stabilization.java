@@ -17,8 +17,19 @@ public class Stabilization implements Runnable {
         // Ask successor for its predecessor and put it in the x variable
         FingerTableEntry succ = node.getFinger(0);
 
+        if (succ == null){
+            System.out.println("Successor is null");
+            return;
+        }
+
         Message m = new Message(MessageType.FIND_PREDECESSOR);
         Message ans = node.getSender().sendWithAnswer(m, succ.getValue());
+
+        if (ans == null){
+            System.out.println("Answer is null on stabilization");
+            node.setFinger(0, new FingerTableEntry(-1, null));
+            return;
+        }
 
         if (!ans.isPredecessorMessage()){
             System.out.println("Error on finding predecessor (stabilization) [Message doesn't match expected type].");
