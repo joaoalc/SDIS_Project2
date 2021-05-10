@@ -2,6 +2,8 @@ package messages;
 
 import chordProtocol.FingerTableEntry;
 import chordProtocol.Node;
+import peers.Peer;
+import subProtocols.SubProtocolsData;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -52,6 +54,11 @@ public class MessageHandler {
                 }
                 FingerTableEntry entry = message.getData();
                 handleJoin(entry);
+                break;
+            case PUTCHUNK:
+                System.out.println("Received PutChunk!");
+                SubProtocolsData content = message.getContent();
+                handlePutChunk(content);
                 break;
             default:
                 System.out.println("DEFAULT");
@@ -107,6 +114,20 @@ public class MessageHandler {
     private void handleJoin(FingerTableEntry entry){
         FingerTableEntry successor = node.findSuccessor(entry.getId());
         Message answer = new Message(MessageType.SUCCESSOR, successor, entry.getId());
+        try{
+            sendAnswer(answer);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void handlePutChunk(SubProtocolsData content){
+
+        System.out.println("Rep Degree: " + content.getReplicationDegree());
+        SubProtocolsData answerContent = new SubProtocolsData(Peer.getId());
+        answerContent.setReplicationDegree(content.getReplicationDegree()-1);
+
+        Message answer = new Message(MessageType.STORED, answerContent);
         try{
             sendAnswer(answer);
         } catch (IOException e){

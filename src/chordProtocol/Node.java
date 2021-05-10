@@ -9,6 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Node {
 
@@ -18,6 +21,7 @@ public class Node {
     private FingerTableEntry thisEntry;
     private FingerTableEntry predecessor;
     private MessageSender sender;
+    private ExecutorService threadExecutor;
 
     public Node(InetSocketAddress address){
         this.id = generateId(address);
@@ -26,6 +30,7 @@ public class Node {
         fingerTable = new FingerTableEntry[M];
         this.predecessor = null;
         this.sender = new MessageSender();
+        threadExecutor = Executors.newFixedThreadPool(5);
         initFingerTable();
     }
 
@@ -41,6 +46,10 @@ public class Node {
         } else {
             System.out.println("Predecessor is null!!");
         }
+    }
+
+    public ExecutorService getThreadExecutor() {
+        return threadExecutor;
     }
 
     public FingerTableEntry getEntry(){

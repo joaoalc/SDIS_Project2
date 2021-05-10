@@ -4,9 +4,21 @@ import chordProtocol.CheckPredecessorFailure;
 import chordProtocol.FixFingers;
 import chordProtocol.Node;
 import chordProtocol.Stabilization;
+import filesystem.Chunk;
+import filesystem.ChunkFileSystemManager;
 import messages.MessageReceiver;
+import subProtocols.Backup;
 
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.Vector;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -15,22 +27,44 @@ import java.util.concurrent.TimeUnit;
 /*
 Client:
 java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer localhost 8000
-
-Server:
-
-
  */
 
-public class Peer {
+public class Peer implements RMIStub{
 
     private int port;
     private String address;
     private Node node;
+    private static boolean isRestoring;
+    private static int id;
+    private static ChunkFileSystemManager manager;
 
-    public Peer(String address, int port){
+    public Peer(String address, int port, int id){
         this.address = address;
         this.port = port;
+        this.id = id;
+        System.out.println("Peer Id: " + this.id);
+        isRestoring = false;
         node = new Node(new InetSocketAddress(address, port));
+        manager = deserialize();
+        if (manager == null) manager = new ChunkFileSystemManager();
+    }
+
+    /**
+     * Getter for the id attribute
+     *
+     * @return Returns the id attribute
+     */
+    public static int getId(){
+        return id;
+    }
+
+    /**
+     * Getter for the manager attribute
+     *
+     * @return Returns the manager attribute
+     */
+    public static ChunkFileSystemManager getManager(){
+        return manager;
     }
 
     public int getPort(){
@@ -64,28 +98,114 @@ public class Peer {
     public static void main(String[] args){
 
         System.out.println(args.length);
-        if (args.length != 2 && args.length != 4){
-            System.out.println("Usage: java Peer <address> <port> [<chord_peer_address> <chord_peer_port>]");
+        if (args.length != 4 && args.length != 6){
+            System.out.println("Usage: java Peer <id> <peerAccessPoint> <address> <port> [<chord_peer_address> <chord_peer_port>]");
             return;
         }
 
-        String address = args[0];
-        int port = Integer.parseInt(args[1]);
+        int id = Integer.parseInt(args[0]);
+        String peerAccessPoint = args[1];
+        String address = args[2];
+        int port = Integer.parseInt(args[3]);
 
-        Peer p = new Peer(address, port);
+        Peer p = new Peer(address, port, id);
 
-        System.out.println("Peer");
+        try {
+            RMIStub stub = (RMIStub) UnicastRemoteObject.exportObject(p, 0);
+            Registry reg = LocateRegistry.getRegistry("localhost");
+            reg.rebind(peerAccessPoint, stub);
+        } catch (Exception e){
+            e.printStackTrace();
+            return;
+        }
+
         p.start();
 
-        if (args.length == 2){
+        if (args.length == 4){
             p.getNode().createNewChordRing();
-        } else if (args.length == 4){
-            String peerFromRingAddress = args[2];
-            int peerFromRingPort = Integer.parseInt(args[3]);
+        } else if (args.length == 6){
+            String peerFromRingAddress = args[4];
+            int peerFromRingPort = Integer.parseInt(args[5]);
             p.getNode().joinExistingChordRing(new InetSocketAddress(peerFromRingAddress, peerFromRingPort));
         }
 
     }
 
 
+    @Override
+    public void backup(String file, int replicationDegree) throws RemoteException {
+
+        Backup protocol = new Backup(file, replicationDegree, this.node);
+        node.getThreadExecutor().execute(protocol);
+
+    }
+
+    @Override
+    public void delete(String file) throws RemoteException {
+
+    }
+
+    @Override
+    public void restore(String file) throws RemoteException {
+
+    }
+
+    @Override
+    public void reclaim(int newCapacity) throws RemoteException {
+
+    }
+
+    @Override
+    public void state() throws RemoteException {
+
+    }
+
+    /**
+     * Serializes the chunk's filesystem manager and stores it
+     */
+    public static void serialize(){
+        File f1 = new File("files/storage/");
+        f1.mkdir();
+        File f = new File("files/storage/peer" + Peer.getId() + ".ser");
+        try{
+            f.createNewFile();
+
+            FileOutputStream os = new FileOutputStream(f, false);
+            ObjectOutputStream objectStream = new ObjectOutputStream(os);
+            objectStream.writeObject(manager);
+            objectStream.close();
+            os.close();
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+
+        System.out.println("[Peer] Serialized");
+
+    }
+
+    /**
+     * Deserializes the chunk's filesystem manager if it exists, else creates a new one
+     *
+     * @return Returns the chunk's filesystem manager
+     */
+    private static ChunkFileSystemManager deserialize(){
+        File f = new File("files/storage/peer" + Peer.getId() + ".ser");
+        ChunkFileSystemManager c = null;
+        if (f.exists()){
+            try{
+                FileInputStream is = new FileInputStream(f);
+                ObjectInputStream objectStream = new ObjectInputStream(is);
+                c = (ChunkFileSystemManager) objectStream.readObject();
+                objectStream.close();
+                is.close();
+            } catch(Exception e){
+                e.printStackTrace();
+            }
+
+            System.out.println("[Peer] Deserialized");
+
+        }
+
+        return c;
+    }
 }
