@@ -25,6 +25,10 @@ public class SubProtocolsData implements Serializable {
         this.c = c;
     }
 
+    public Chunk getChunk(){
+        return c;
+    }
+
     public void setReplicationDegree(int replicationDegree) {
         this.replicationDegree = replicationDegree;
     }

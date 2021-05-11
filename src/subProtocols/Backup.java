@@ -63,33 +63,48 @@ public class Backup implements Runnable {
             return;
         }
 
+        Peer.getManager().addFile(new FileInfo(this.filename, fileId, replicationDegree));
+
         for (int i = 0; i < chunks.size(); i++){
 
             SubProtocolsData content = new SubProtocolsData(Peer.getId());
             content.setChunk(chunks.get(i));
+            content.setReplicationDegree(replicationDegree);
             Message m = new Message(MessageType.PUTCHUNK, content);
-            System.out.println("Before send");
             Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
             System.out.println("[BACKUP] Got answer to PutChunk!");
 
             if (answer == null){
                 System.out.println("Answer is null!");
                 return;
-            } else if (!answer.isStoredMessage()){
+            }
+
+            if (answer.isStoredMessage()){
                 SubProtocolsData c = answer.getContent();
                 if (content == null){
                     System.out.println("Content is null");
                     return;
                 }
 
-                int receivedRepDegree = content.getReplicationDegree();
+                int receivedRepDegree = c.getReplicationDegree();
+                System.out.println("Received replication degree: " + receivedRepDegree);
                 if (receivedRepDegree == -1){
                     System.out.println("Rep degree wrong");
+                    Peer.serialize();
                     return;
-                } else if (receivedRepDegree < replicationDegree){
+                } else if (receivedRepDegree > 0){
                     System.out.println("Error while backing up, cant achieve the desired replication degree on chunk " + chunks.get(i).getChunkNo());
+                    Peer.serialize();
                     return;
                 }
+            } else if (answer.isFailedMessage()){
+                System.out.println("Backup failed");
+                Peer.serialize();
+                return;
+            } else {
+                System.out.println("Error on messages");
+                Peer.serialize();
+                return;
             }
 
         }

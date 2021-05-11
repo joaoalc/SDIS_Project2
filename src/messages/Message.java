@@ -101,4 +101,8 @@ public class Message implements Serializable {
         return type == MessageType.STORED;
     }
 
+    public boolean isFailedMessage(){
+        return type == MessageType.FAILED;
+    }
+
 }

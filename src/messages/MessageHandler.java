@@ -2,6 +2,7 @@ package messages;
 
 import chordProtocol.FingerTableEntry;
 import chordProtocol.Node;
+import filesystem.Chunk;
 import peers.Peer;
 import subProtocols.SubProtocolsData;
 
@@ -124,6 +125,69 @@ public class MessageHandler {
     private void handlePutChunk(SubProtocolsData content){
 
         System.out.println("Rep Degree: " + content.getReplicationDegree());
+
+        Chunk c = content.getChunk();
+        if (c == null){
+            System.out.println("Chunk is null");
+            return;
+        }
+
+        int stored = Peer.getManager().storeChunk(c);
+        if (stored == -1){ // If it's my file
+            System.out.println("My File, backup failed");
+            // Backup finished, desired replication degree not achieved
+            Message answer = new Message(MessageType.FAILED, content);
+            try{
+                sendAnswer(answer);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            return;
+        } else if (stored < 0 && stored != -3){
+            // Not stored
+            // Send to successor
+            System.out.println("Not stored, sending to successor");
+            Message m = new Message(MessageType.PUTCHUNK, content);
+            Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
+
+            try{
+                sendAnswer(answer);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        int newRepDegree = content.getReplicationDegree() - 1;
+        if (newRepDegree <= 0){
+            // Backup finished, desired replication degree achieved
+            SubProtocolsData answerData = new SubProtocolsData(Peer.getId());
+            answerData.setChunk(content.getChunk());
+            answerData.setReplicationDegree(newRepDegree);
+            System.out.println("Backup finished, rep degree achieved, rep degree: " + answerData.getReplicationDegree());
+            Message answer = new Message(MessageType.STORED, answerData);
+            System.out.println("Answer rep degree: " + answer.getContent().getReplicationDegree());
+            try{
+                sendAnswer(answer);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        content.setReplicationDegree(newRepDegree);
+        // Send to successor
+        System.out.println("Sending to successor with new rep degree: " + content.getReplicationDegree());
+        Message m = new Message(MessageType.PUTCHUNK, content);
+        Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
+
+        try{
+            sendAnswer(answer);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        /*
         SubProtocolsData answerContent = new SubProtocolsData(Peer.getId());
         answerContent.setReplicationDegree(content.getReplicationDegree()-1);
 
@@ -132,7 +196,7 @@ public class MessageHandler {
             sendAnswer(answer);
         } catch (IOException e){
             e.printStackTrace();
-        }
+        }*/
     }
 
 }

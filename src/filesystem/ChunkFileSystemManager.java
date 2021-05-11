@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
-import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,6 +31,7 @@ public class ChunkFileSystemManager implements Serializable{
     private Vector<String> chunksInFilesystem;
     private Vector<Chunk> storedChunks;
     private Vector<FileInfo> backedUpFiles;
+    private Vector<FileInfo> peerFiles;
     private ConcurrentHashMap<String, Integer> chunksCurrentReplicationDegrees;
     private ConcurrentHashMap<String, Vector<Chunk>> restored_files;
     private ConcurrentHashMap<String, Boolean> hasReceivedPutChunk;
@@ -49,6 +49,7 @@ public class ChunkFileSystemManager implements Serializable{
         backedUpFiles = new Vector<FileInfo>();
         currentCapacity = INITIAL_CAPACITY;
         hasReceivedPutChunk = new ConcurrentHashMap<String, Boolean>();
+        peerFiles = new Vector<FileInfo>();
     }
 
     /**
@@ -207,6 +208,35 @@ public class ChunkFileSystemManager implements Serializable{
             return;
         }
         backedUpFiles.add(f);
+    }
+
+    /**
+     * Finds a peer's file
+     *
+     * @param pathname The name of the file
+     *
+     * @return Returns the file if it has been found, null otherwise
+     */
+    private FileInfo findFile(String pathname){
+        for (FileInfo info: peerFiles){
+            if (info.getPathName().equals(pathname)){
+                return info;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Adds a file to the peer's files
+     *
+     * @param f The information of the file
+     */
+    public void addFile(FileInfo f){
+        FileInfo fi = findFile(f.getPathName());
+        if (fi != null){
+            return;
+        }
+        peerFiles.add(f);
     }
 
     /**
@@ -416,6 +446,10 @@ public class ChunkFileSystemManager implements Serializable{
      * @return Returns true if the chunk is from one of the peer's files, false otherwise
      */
     private boolean chunkIsFromPeersFile(Chunk c){
+        for (FileInfo fi: peerFiles){
+            if (c.getFileId().equals(fi.getFileId()))
+                return true;
+        }
         for (FileInfo fi: backedUpFiles){
             if (c.getFileId().equals(fi.getFileId()))
                 return true;
@@ -430,7 +464,6 @@ public class ChunkFileSystemManager implements Serializable{
      *
      * @return Returns 0 if there is no space to store the chunk, 1 if successful and -1 if an error occurs
      */
-    /*
     public int storeChunk(Chunk c){
 
         if (chunkIsFromPeersFile(c)){
@@ -440,7 +473,7 @@ public class ChunkFileSystemManager implements Serializable{
         double notUsedStorage = getNotUsedStorage();
         if (c.getData().length > notUsedStorage*1000){
             System.out.println("Can't store chunk, not enough space...");
-            return 0;
+            return -2;
         }
 
         String fileId = c.getFileId();
@@ -454,18 +487,8 @@ public class ChunkFileSystemManager implements Serializable{
 
         String chunkName = fileId + "-" + String.valueOf(chunkNo);
         if (chunkIsStored(chunkName)){
-            // Send stored message
-            try{
-                int randomInterval = new Random().nextInt(401);
-                Thread.sleep(randomInterval);
-                StoredMessage m = new StoredMessage("STORED", 1.0, Peer.getId(), fileId, chunkNo);
-                Peer.getMC().send(m);
-                System.out.println("[MC] Sent Stored message! (chunk was already stored)");
-            } catch(Exception e){
-                e.printStackTrace();
-            }
             Peer.serialize();
-            return -1;
+            return -3;
         }
         String path = "files/peer" + String.valueOf(Peer.getId()) + "/chunks/" + chunkName;
         File chunkFile = new File(path);
@@ -481,16 +504,6 @@ public class ChunkFileSystemManager implements Serializable{
             }
             storedChunks.add(c);
             chunksInFilesystem.add(fileId + "-" + String.valueOf(chunkNo));
-            // Send stored message
-            try{
-                int randomInterval = new Random().nextInt(401);
-                Thread.sleep(randomInterval);
-                StoredMessage m = new StoredMessage("STORED", 1.0, Peer.getId(), fileId, chunkNo);
-                Peer.getMC().send(m);
-                System.out.println("[MC] Sent Stored message! (chunks was not previously stored)");
-            } catch(Exception e){
-                e.printStackTrace();
-            }
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -499,8 +512,6 @@ public class ChunkFileSystemManager implements Serializable{
         return 1;
 
     }
-
-     */
 
     /**
      * Deletes all chunks from a certain file from the peer's filesystem

@@ -4,21 +4,16 @@ import chordProtocol.CheckPredecessorFailure;
 import chordProtocol.FixFingers;
 import chordProtocol.Node;
 import chordProtocol.Stabilization;
-import filesystem.Chunk;
 import filesystem.ChunkFileSystemManager;
 import messages.MessageReceiver;
 import subProtocols.Backup;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Vector;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -26,7 +21,9 @@ import java.util.concurrent.TimeUnit;
 
 /*
 Client:
-java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer localhost 8000
+java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer 1 Peer1 localhost 8000
+java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer 2 Peer2 localhost 8001 localhost 8000
+java peers.TestApp Peer1 BACKUP teste.txt 1
  */
 
 public class Peer implements RMIStub{

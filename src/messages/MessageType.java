@@ -11,5 +11,6 @@ public enum MessageType {
     SUCCESSOR,
     JOIN,
     PUTCHUNK,
-    STORED
+    STORED,
+    FAILED
 }
