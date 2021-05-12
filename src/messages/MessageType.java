@@ -12,5 +12,7 @@ public enum MessageType {
     JOIN,
     PUTCHUNK,
     STORED,
-    FAILED
+    FAILED,
+    DELETE,
+    DELETED
 }

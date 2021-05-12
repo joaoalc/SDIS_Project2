@@ -61,6 +61,11 @@ public class MessageHandler {
                 SubProtocolsData content = message.getContent();
                 handlePutChunk(content);
                 break;
+            case DELETE:
+                System.out.println("Received DELETE!");
+                SubProtocolsData deleteContent = message.getContent();
+                handleDelete(deleteContent);
+                break;
             default:
                 System.out.println("DEFAULT");
                 break;
@@ -197,6 +202,50 @@ public class MessageHandler {
         } catch (IOException e){
             e.printStackTrace();
         }*/
+    }
+
+    private void handleDelete(SubProtocolsData content){
+
+        int id = content.getSenderId();
+        if (id == -1){
+            System.out.println("Error on delete, senderId is -1...");
+            return;
+        } else if (id == Peer.getId()){
+            // Chegou de volta ao original, enviar resposta
+            System.out.println("Original peer!");
+            Message answer = new Message(MessageType.DELETED);
+            try{
+                sendAnswer(answer);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        String fileId = content.getFileId();
+        if (fileId == null){
+            System.out.println("Error on delete, fileId is null...");
+            return;
+        }
+
+        int res = Peer.getManager().delete(fileId);
+        if (res == -1){
+            System.out.println("Error deleting chunk...");
+            return;
+        }
+
+        // Send DELETE to successor
+        Message toForward = new Message(MessageType.DELETE, content);
+        Message answer = node.getSender().sendWithAnswer(toForward, node.getFinger(0).getValue());
+
+        // Send answer back
+
+        try{
+            sendAnswer(answer);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
     }
 
 }

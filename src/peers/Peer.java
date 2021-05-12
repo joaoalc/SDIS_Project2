@@ -7,6 +7,7 @@ import chordProtocol.Stabilization;
 import filesystem.ChunkFileSystemManager;
 import messages.MessageReceiver;
 import subProtocols.Backup;
+import subProtocols.Delete;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -14,6 +15,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -139,6 +141,17 @@ public class Peer implements RMIStub{
 
     @Override
     public void delete(String file) throws RemoteException {
+        File f = new File("files/peer" + id + "/peer_files/" + file);
+        String fileId = null;
+        try{
+            fileId = manager.generateFileId(f);
+        } catch (NoSuchAlgorithmException e){
+            e.printStackTrace();
+            return;
+        }
+
+        Delete protocol = new Delete(fileId, file, node);
+        node.getThreadExecutor().execute(protocol);
 
     }
 

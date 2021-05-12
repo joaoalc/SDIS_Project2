@@ -7,18 +7,24 @@ import java.io.Serializable;
 public class SubProtocolsData implements Serializable {
 
     private int replicationDegree;
-    private byte[] content;
+    private String fileId;
     private Chunk c;
     private int senderId;
 
     public SubProtocolsData(int senderId){
         replicationDegree = -1;
-        content = null;
         this.senderId = senderId;
+        fileId = null;
+        c = null;
     }
 
-    public void setContent(byte[] content) {
-        this.content = content;
+
+    public void setFileId(String fileId){
+        this.fileId = fileId;
+    }
+
+    public String getFileId(){
+        return fileId;
     }
 
     public void setChunk(Chunk c){
@@ -35,10 +41,6 @@ public class SubProtocolsData implements Serializable {
 
     public int getReplicationDegree() {
         return replicationDegree;
-    }
-
-    public byte[] getContent() {
-        return content;
     }
 
     public int getSenderId() {
