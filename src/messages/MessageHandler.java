@@ -3,6 +3,7 @@ package messages;
 import chordProtocol.FingerTableEntry;
 import chordProtocol.Node;
 import filesystem.Chunk;
+import filesystem.ChunkInfo;
 import peers.Peer;
 import subProtocols.SubProtocolsData;
 
@@ -65,6 +66,11 @@ public class MessageHandler {
                 System.out.println("Received DELETE!");
                 SubProtocolsData deleteContent = message.getContent();
                 handleDelete(deleteContent);
+                break;
+            case GETCHUNK:
+                System.out.println("Received GetChunk!");
+                ChunkInfo ci = message.getInfo();
+                handleGetChunk(ci);
                 break;
             default:
                 System.out.println("DEFAULT");
@@ -239,6 +245,45 @@ public class MessageHandler {
         Message answer = node.getSender().sendWithAnswer(toForward, node.getFinger(0).getValue());
 
         // Send answer back
+
+        try{
+            sendAnswer(answer);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+    }
+
+    public void handleGetChunk(ChunkInfo ci){
+
+        if (ci == null){
+            System.out.println("Error on GetChunk, ChunkInfo is null");
+            return;
+        }
+
+        if (Peer.getManager().hasChunk(ci.getFileId(), ci.getChunkNo())){
+            Chunk c = Peer.getManager().getChunk(ci.getFileId(), ci.getChunkNo());
+            SubProtocolsData data = new SubProtocolsData(Peer.getId());
+            data.setChunk(c);
+            // Send chunk back
+            Message sendBack = new Message(MessageType.CHUNK, data);
+
+            try{
+                sendAnswer(sendBack);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        // Doesn't have the requested chunk, send GetChunk to successor
+        Message m = new Message(MessageType.GETCHUNK, ci);
+        Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
+
+        if (answer == null){
+            System.out.println("Error on restore, answer is null");
+            return;
+        }
 
         try{
             sendAnswer(answer);

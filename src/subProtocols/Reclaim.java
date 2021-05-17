@@ -1,4 +1,13 @@
 package subProtocols;
 
-public class Reclaim {
+public class Reclaim implements Runnable {
+
+    public Reclaim(){
+
+    }
+
+    @Override
+    public void run() {
+
+    }
 }

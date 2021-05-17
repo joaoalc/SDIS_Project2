@@ -1,6 +1,7 @@
 package messages;
 
 import chordProtocol.FingerTableEntry;
+import filesystem.ChunkInfo;
 import subProtocols.SubProtocolsData;
 
 import java.io.Serializable;
@@ -11,17 +12,20 @@ public class Message implements Serializable {
     private FingerTableEntry data;
     private int id;
     private SubProtocolsData content;
+    private ChunkInfo info;
 
     public Message(MessageType type){
         this.type = type;
         data = null;
         id = -1;
         content = null;
+        info = null;
     }
 
     public Message(MessageType type, SubProtocolsData content){
         this(type);
         this.content = content;
+        info = null;
     }
 
     public Message(MessageType type, int id){
@@ -29,6 +33,7 @@ public class Message implements Serializable {
         data = null;
         this.id = id;
         content = null;
+        info = null;
     }
 
     public Message(MessageType type, FingerTableEntry data){
@@ -36,6 +41,7 @@ public class Message implements Serializable {
         this.data = data;
         id = -1;
         content = null;
+        info = null;
     }
 
     public Message(MessageType type, FingerTableEntry data, int id){
@@ -43,6 +49,20 @@ public class Message implements Serializable {
         this.data = data;
         this.id = id;
         content = null;
+        info = null;
+    }
+
+    public Message(MessageType type, ChunkInfo info){
+        this(type);
+        this.info = info;
+    }
+
+    public ChunkInfo getInfo() {
+        return info;
+    }
+
+    public void setInfo(ChunkInfo info) {
+        this.info = info;
     }
 
     public boolean hasData(){

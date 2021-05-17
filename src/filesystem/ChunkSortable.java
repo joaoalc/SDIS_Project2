@@ -10,10 +10,10 @@ package filesystem;
 
 public class ChunkSortable implements Comparable<ChunkSortable>{
 
-    private Chunk c;
+    private ChunkInfo c;
     private int score;
 
-    public ChunkSortable(Chunk c, int score){
+    public ChunkSortable(ChunkInfo c, int score){
         this.c = c;
         this.score = score;
     }
@@ -22,7 +22,7 @@ public class ChunkSortable implements Comparable<ChunkSortable>{
         return score;
     }
 
-    public Chunk getChunk() {
+    public ChunkInfo getChunkInfo() {
         return c;
     }
 

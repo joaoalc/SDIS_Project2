@@ -14,5 +14,7 @@ public enum MessageType {
     STORED,
     FAILED,
     DELETE,
-    DELETED
+    DELETED,
+    GETCHUNK,
+    CHUNK
 }

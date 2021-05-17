@@ -49,7 +49,7 @@ public class Backup implements Runnable {
         File f = new File("files/peer" + Peer.getId() + "/peer_files/" + this.filename);
         Vector<Chunk> chunks = null;
         try{
-            chunks =manager.getChunksFromFile(f, replicationDegree);
+            chunks = manager.getChunksFromFile(f, replicationDegree);
         } catch (Exception e){
             e.printStackTrace();
             return;

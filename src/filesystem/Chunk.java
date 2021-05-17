@@ -39,6 +39,14 @@ public class Chunk implements Comparable<Chunk>, Serializable {
         this.originalPeerId = originalPeerId;
     }
 
+    public int getOriginalPeerId() {
+        return originalPeerId;
+    }
+
+    public void setOriginalPeerId(int originalPeerId) {
+        this.originalPeerId = originalPeerId;
+    }
+
     /**
      * Getter for the replicationDegree attribute
      *

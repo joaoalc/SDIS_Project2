@@ -12,6 +12,7 @@ import peers.Peer;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
@@ -29,7 +30,7 @@ public class ChunkFileSystemManager implements Serializable{
     private static final long serialVersionUID = 4L;
 
     private Vector<String> chunksInFilesystem;
-    private Vector<Chunk> storedChunks;
+    private Vector<ChunkInfo> storedChunks;
     private Vector<FileInfo> backedUpFiles;
     private Vector<FileInfo> peerFiles;
     private ConcurrentHashMap<String, Integer> chunksCurrentReplicationDegrees;
@@ -44,12 +45,16 @@ public class ChunkFileSystemManager implements Serializable{
     public ChunkFileSystemManager(){
         chunksInFilesystem = new Vector<String>();
         chunksCurrentReplicationDegrees = new ConcurrentHashMap<String, Integer>();
-        storedChunks = new Vector<Chunk>();
+        storedChunks = new Vector<ChunkInfo>();
         restored_files = new ConcurrentHashMap<String, Vector<Chunk>>();
         backedUpFiles = new Vector<FileInfo>();
         currentCapacity = INITIAL_CAPACITY;
         hasReceivedPutChunk = new ConcurrentHashMap<String, Boolean>();
         peerFiles = new Vector<FileInfo>();
+    }
+
+    public Vector<FileInfo> getPeerFiles() {
+        return peerFiles;
     }
 
     /**
@@ -135,8 +140,8 @@ public class ChunkFileSystemManager implements Serializable{
      */
     public double getUsedStorage(){
         int usedStorage = 0;
-        for (Chunk c: storedChunks){
-            usedStorage += c.getData().length;
+        for (ChunkInfo c: storedChunks){
+            usedStorage += c.getDataLength();
         }
         return (double)usedStorage / 1000;
     }
@@ -155,7 +160,7 @@ public class ChunkFileSystemManager implements Serializable{
      *
      * @return Returns a vector containing the chunks that the peer has stored in its filesystem
      */
-    public Vector<Chunk> getStoredChunks(){
+    public Vector<ChunkInfo> getStoredChunks(){
         return this.storedChunks;
     }
 
@@ -370,7 +375,7 @@ public class ChunkFileSystemManager implements Serializable{
     private Vector<ChunkSortable> getChunksByDeletePriority(){
         Vector<ChunkSortable> chunks = new Vector<ChunkSortable>();
 
-        for (Chunk c: storedChunks){
+        for (ChunkInfo c: storedChunks){
             int chunkRepDegree = getChunkReplicationDegree(c.getFileId() + "-" + c.getChunkNo());
             int score = chunkRepDegree - c.getReplicationDegree();
             chunks.add(new ChunkSortable(c, score));
@@ -502,7 +507,7 @@ public class ChunkFileSystemManager implements Serializable{
             if (c == null){
                 return -1;
             }
-            storedChunks.add(c);
+            storedChunks.add(new ChunkInfo(c.getFileId(), c.getChunkNo(), c.getReplicationDegree(), c.getData().length, c.getOriginalPeerId()));
             chunksInFilesystem.add(fileId + "-" + String.valueOf(chunkNo));
         } catch (IOException e){
             e.printStackTrace();
@@ -593,7 +598,16 @@ public class ChunkFileSystemManager implements Serializable{
         if (hasChunk(fileId, chunkNo)){
             for (int i = 0; i < storedChunks.size(); i++){
                 if (storedChunks.get(i).getFileId().equals(fileId) && storedChunks.get(i).getChunkNo() == chunkNo){
-                    return storedChunks.get(i);
+                    File f = new File("files/peer" + Peer.getId() + "/chunks/" + fileId + "-" + chunkNo);
+                    byte[] fileData;
+                    try{
+                        fileData = Files.readAllBytes(f.toPath());
+                    } catch (IOException e){
+                        e.printStackTrace();
+                        return null;
+                    }
+
+                    return new Chunk(fileId, chunkNo, fileData, storedChunks.get(i).getReplicationDegree(), storedChunks.get(i).getOriginalPeerId());
                 }
             }
         }
@@ -609,7 +623,7 @@ public class ChunkFileSystemManager implements Serializable{
      */
     private boolean removeFromStoredChunks(String chunkName){
         chunksInFilesystem.remove(chunkName);
-        for (Chunk c: storedChunks){
+        for (ChunkInfo c: storedChunks){
             if ((c.getFileId() + "-" + c.getChunkNo()).equals(chunkName)){
                 storedChunks.remove(c);
                 return true;

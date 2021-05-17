@@ -8,6 +8,8 @@ import filesystem.ChunkFileSystemManager;
 import messages.MessageReceiver;
 import subProtocols.Backup;
 import subProtocols.Delete;
+import subProtocols.Restore;
+import subProtocols.State;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -157,7 +159,8 @@ public class Peer implements RMIStub{
 
     @Override
     public void restore(String file) throws RemoteException {
-
+        Restore protocol = new Restore(file, node);
+        node.getThreadExecutor().execute(protocol);
     }
 
     @Override
@@ -167,7 +170,8 @@ public class Peer implements RMIStub{
 
     @Override
     public void state() throws RemoteException {
-
+        State protocol = new State();
+        node.getThreadExecutor().execute(protocol);
     }
 
     /**
