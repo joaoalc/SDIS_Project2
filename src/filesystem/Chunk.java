@@ -8,6 +8,8 @@
 
 package filesystem;
 
+import chordProtocol.FingerTableEntry;
+
 import java.io.Serializable;
 
 /**
@@ -20,6 +22,7 @@ public class Chunk implements Comparable<Chunk>, Serializable {
     private byte[] data;
     private int replicationDegree;
     private int originalPeerId;
+    private FingerTableEntry originalEntry;
 
     /**
      * Constructor for the Chunk class
@@ -37,6 +40,15 @@ public class Chunk implements Comparable<Chunk>, Serializable {
         this.data = data;
         this.replicationDegree = replicationDegree;
         this.originalPeerId = originalPeerId;
+        this.originalEntry = null;
+    }
+
+    public void setOriginalEntry(FingerTableEntry entry){
+        originalEntry = entry;
+    }
+
+    public FingerTableEntry getOriginalEntry() {
+        return originalEntry;
     }
 
     public int getOriginalPeerId() {

@@ -8,6 +8,7 @@
 
 package filesystem;
 
+import chordProtocol.FingerTableEntry;
 import peers.Peer;
 
 import java.io.*;
@@ -40,12 +41,13 @@ public class ChunkFileSystemManager implements Serializable{
     private Vector<ChunkInfo> predecessorChunks;
     private Vector<ChunkInfo> successorChunks;
     private ConcurrentHashMap<String, Vector<Integer>> peersThatHaveChunk;
+    private FingerTableEntry entry;
 
 
     /**
      * Constructor for the ChunkFileSystemManager class
      */
-    public ChunkFileSystemManager(){
+    public ChunkFileSystemManager(FingerTableEntry entry){
         chunksInFilesystem = new Vector<String>();
         chunksCurrentReplicationDegrees = new ConcurrentHashMap<String, Integer>();
         storedChunks = new Vector<ChunkInfo>();
@@ -57,6 +59,24 @@ public class ChunkFileSystemManager implements Serializable{
         predecessorChunks = new Vector<ChunkInfo>();
         successorChunks = new Vector<ChunkInfo>();
         peersThatHaveChunk = new ConcurrentHashMap<String, Vector<Integer>>();
+        this.entry = entry;
+    }
+
+    public FileInfo getFileInfoFromFileId(String fileId){
+        for (FileInfo fi: peerFiles){
+            if (fi.getFileId().equals(fileId)){
+                return fi;
+            }
+        }
+        return null;
+    }
+
+    public Vector<Integer> getPeersThatHaveChunk(String chunkName){
+        return peersThatHaveChunk.getOrDefault(chunkName, null);
+    }
+
+    public void setPeersThatHaveChunk(String chunkName, Vector<Integer> vec){
+        peersThatHaveChunk.put(chunkName, vec);
     }
 
     public void setPredecessorChunks(Vector<ChunkInfo> predecessorChunks){
@@ -529,7 +549,7 @@ public class ChunkFileSystemManager implements Serializable{
             if (c == null){
                 return -1;
             }
-            storedChunks.add(new ChunkInfo(c.getFileId(), c.getChunkNo(), c.getReplicationDegree(), c.getData().length, c.getOriginalPeerId()));
+            storedChunks.add(new ChunkInfo(c.getFileId(), c.getChunkNo(), c.getReplicationDegree(), c.getData().length, c.getOriginalPeerId(), c.getOriginalEntry()));
             chunksInFilesystem.add(fileId + "-" + String.valueOf(chunkNo));
         } catch (IOException e){
             e.printStackTrace();
@@ -701,6 +721,14 @@ public class ChunkFileSystemManager implements Serializable{
         }
     }
 
+    public Chunk getChunkFromFile(File f, int replicationDegree, int chunkNo, String fileId) throws FileNotFoundException, IOException{
+        FileInputStream fis = new FileInputStream(f);
+        int offset = (chunkNo - 1) * 64000;
+        byte[] buffer = new byte[(int)(f.length()-offset)];
+        fis.read(buffer, offset, (int)(f.length()-offset));
+        return new Chunk(fileId, chunkNo, buffer, replicationDegree, Peer.getId());
+    }
+
     /**
      * Splits a file into chunks
      *
@@ -726,9 +754,11 @@ public class ChunkFileSystemManager implements Serializable{
         for (int i = 0; i < numChunks; i++){
             Chunk c;
             if (i == numChunks-1){
-                c  = new Chunk(fileId, i+1, new byte[remainder], replicationDegree, Peer.getId());
+                c  = new Chunk(fileId, i+1, new byte[remainder], replicationDegree, entry.getId());
+                c.setOriginalEntry(entry);
             } else {
-                c = new Chunk(fileId, i+1, new byte[MAX_CHUNK_SIZE], replicationDegree, Peer.getId());
+                c = new Chunk(fileId, i+1, new byte[MAX_CHUNK_SIZE], replicationDegree, entry.getId());
+                c.setOriginalEntry(entry);
             }
             int end = Math.min(fileBytes.length, offset+MAX_CHUNK_SIZE);
 

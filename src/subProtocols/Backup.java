@@ -17,6 +17,7 @@ public class Backup implements Runnable {
     private int replicationDegree;
     private ChunkFileSystemManager manager;
     private Node node;
+    private boolean isSingleChunk;
     /*
     private Path p;
     private File f;
@@ -24,11 +25,12 @@ public class Backup implements Runnable {
     private ByteBuffer buffer;
      */
 
-    public Backup(String filename, int replicationDegree, Node node){
+    public Backup(String filename, int replicationDegree, Node node, boolean singleChunk){
         this.filename = filename;
         this.replicationDegree = replicationDegree;
         manager = Peer.getManager();
         this.node = node;
+        isSingleChunk = singleChunk;
         /*
         f = new File(this.filename);
         p = Paths.get(this.filename);
@@ -46,6 +48,84 @@ public class Backup implements Runnable {
     @Override
     public void run() {
 
+        if (isSingleChunk){
+            runSingleChunkBackup();
+        } else {
+            runFullBackup();
+        }
+
+    }
+
+    public void runSingleChunkBackup(){
+
+        System.out.println("Starting single chunk backup.");
+
+        String[] parts = filename.split("-");
+        String fileId = parts[0];
+        int chunkNo = Integer.parseInt(parts[1]);
+        FileInfo info = manager.getFileInfoFromFileId(fileId);
+        System.out.println("FileId: " + fileId);
+        System.out.println("Info: " + info);
+        File f = new File("files/peer" + Peer.getId() + "/peer_files/" + info.getPathName());
+
+        Chunk chunk = null;
+
+        try{
+            chunk = manager.getChunkFromFile(f, info.getReplicationDegree(), chunkNo, fileId);
+        } catch (Exception e){
+            e.printStackTrace();
+            return;
+        }
+
+        SubProtocolsData content = new SubProtocolsData(Peer.getId());
+        content.setChunk(chunk);
+        content.setReplicationDegree(info.getReplicationDegree());
+        Message m = new Message(MessageType.PUTCHUNK, content);
+        Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
+
+        if (answer == null){
+            System.out.println("Answer is null!");
+            return;
+        }
+
+        if (answer.isStoredMessage()){
+            SubProtocolsData c = answer.getContent();
+            if (content == null){
+                System.out.println("Content is null");
+                return;
+            }
+
+            Vector<Integer> peersThatStored = c.getPeersThatBackedUpChunk();
+            System.out.println("Peers that stored chunk: ");
+            for (Integer id: peersThatStored){
+                System.out.println("\tNode with id " + id);
+            }
+
+            int receivedRepDegree = c.getReplicationDegree();
+            System.out.println("Received replication degree: " + receivedRepDegree);
+            if (receivedRepDegree == -1){
+                System.out.println("Rep degree wrong");
+                Peer.serialize();
+                return;
+            } else if (receivedRepDegree > 0){
+                System.out.println("Error while backing up, cant achieve the desired replication degree on chunk " + chunk.getChunkNo());
+                Peer.serialize();
+                return;
+            }
+        } else if (answer.isFailedMessage()){
+            System.out.println("Backup failed");
+            Peer.serialize();
+            return;
+        } else {
+            System.out.println("Error on messages");
+            Peer.serialize();
+            return;
+        }
+
+        System.out.println("Single chunk backup finished!");
+    }
+
+    public void runFullBackup(){
         File f = new File("files/peer" + Peer.getId() + "/peer_files/" + this.filename);
         Vector<Chunk> chunks = null;
         try{
@@ -119,6 +199,5 @@ public class Backup implements Runnable {
 
         System.out.println("[Peer] Backup protocol finished.");
         Peer.serialize();
-
     }
 }

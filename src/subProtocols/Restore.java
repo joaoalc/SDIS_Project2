@@ -58,7 +58,7 @@ public class Restore implements Runnable {
         while(!done){
 
             // Enviar mensagem a dizer que chunk queremos
-            Message m = new Message(MessageType.GETCHUNK, new ChunkInfo(fileId, currentChunkNo, -1, -1, -1));
+            Message m = new Message(MessageType.GETCHUNK, new ChunkInfo(fileId, currentChunkNo, -1, -1, -1, node.getEntry()));
 
             Message answer = null;
             int tryNo = 0;

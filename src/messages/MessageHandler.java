@@ -5,6 +5,7 @@ import chordProtocol.Node;
 import filesystem.Chunk;
 import filesystem.ChunkInfo;
 import peers.Peer;
+import subProtocols.Backup;
 import subProtocols.SubProtocolsData;
 
 import java.io.IOException;
@@ -82,6 +83,11 @@ public class MessageHandler {
                 System.out.println("Info from predecessor " + message.getId());
                 SubProtocolsData predInfoContent = message.getContent();
                 handlePredInfo(predInfoContent);
+                break;
+            case DO_BACKUP:
+                System.out.println("Received DO_BACKUP");
+                ChunkInfo chunkInfo = message.getInfo();
+                handleDoBackup(chunkInfo);
                 break;
             default:
                 System.out.println("DEFAULT");
@@ -328,6 +334,7 @@ public class MessageHandler {
         } catch (IOException e){
             e.printStackTrace();
         }
+        Peer.serialize();
     }
 
     private void handlePredInfo(SubProtocolsData infoContent){
@@ -351,6 +358,31 @@ public class MessageHandler {
         } catch (IOException e){
             e.printStackTrace();
         }
+        Peer.serialize();
+    }
+
+    private void handleDoBackup(ChunkInfo chunkInfo){
+
+        Message answer = new Message(MessageType.ALIVE, Peer.getId());
+        try{
+            sendAnswer(answer);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        if (chunkInfo == null){
+            System.out.println("ChunkInfo is null.");
+            return;
+        }
+
+        try{
+            Thread.sleep(4000);
+        } catch(InterruptedException e){
+            return;
+        }
+
+        Backup protocol = new Backup(chunkInfo.getFileId() + "-" + chunkInfo.getChunkNo(), chunkInfo.getReplicationDegree(), node, true);
+        node.getThreadExecutor().execute(protocol);
     }
 
 }

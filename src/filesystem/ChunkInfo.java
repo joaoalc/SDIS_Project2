@@ -1,5 +1,7 @@
 package filesystem;
 
+import chordProtocol.FingerTableEntry;
+
 import java.io.Serializable;
 
 public class ChunkInfo implements Serializable {
@@ -9,13 +11,19 @@ public class ChunkInfo implements Serializable {
     private int replicationDegree;
     private int dataLength;
     private int originalPeerId;
+    private FingerTableEntry entry;
 
-    public ChunkInfo(String fileId, int chunkNo, int replicationDegree, int dataLength, int originalPeerId){
+    public ChunkInfo(String fileId, int chunkNo, int replicationDegree, int dataLength, int originalPeerId, FingerTableEntry entry){
         this.fileId = fileId;
         this.chunkNo = chunkNo;
         this.replicationDegree = replicationDegree;
         this.dataLength = dataLength;
         this.originalPeerId = originalPeerId;
+        this.entry = entry;
+    }
+
+    public FingerTableEntry getEntry() {
+        return entry;
     }
 
     public int getOriginalPeerId() {

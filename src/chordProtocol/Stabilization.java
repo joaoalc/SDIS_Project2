@@ -13,6 +13,8 @@ public class Stabilization implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("Stabilize");
+
         System.out.println("My id: " + node.getId());
         if (node.getFinger(0) != null){
             System.out.println("My successor: " + node.getFinger(0).getId());

@@ -44,7 +44,7 @@ public class Peer implements RMIStub{
         isRestoring = false;
         node = new Node(new InetSocketAddress(address, port));
         manager = deserialize();
-        if (manager == null) manager = new ChunkFileSystemManager();
+        if (manager == null) manager = new ChunkFileSystemManager(node.getEntry());
     }
 
     /**
@@ -136,7 +136,7 @@ public class Peer implements RMIStub{
     @Override
     public void backup(String file, int replicationDegree) throws RemoteException {
 
-        Backup protocol = new Backup(file, replicationDegree, this.node);
+        Backup protocol = new Backup(file, replicationDegree, this.node, false);
         node.getThreadExecutor().execute(protocol);
 
     }

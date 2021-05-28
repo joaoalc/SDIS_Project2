@@ -10,6 +10,7 @@ public class FixFingers implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("Fix fingers");
         //node.displayFingerTable();
         //System.out.println("-------- Fix Fingers ---------");
         for (int next = 1; next <= Node.M; next++){
