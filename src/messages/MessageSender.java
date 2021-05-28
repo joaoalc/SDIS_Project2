@@ -19,7 +19,6 @@ public class MessageSender {
             s = (SSLSocket) SSLSocketFactory.getDefault().createSocket(address.getAddress(), address.getPort());
             ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
             out.writeObject(message);
-            System.out.println("Wrote");
         } catch(IOException e){
             e.printStackTrace();
             return null;
@@ -31,7 +30,6 @@ public class MessageSender {
             ObjectInputStream in = new ObjectInputStream(s.getInputStream());
             try{
                 answer = (Message) in.readObject();
-                System.out.println("Read");
             } catch(ClassNotFoundException e){
                 e.printStackTrace();
                 return null;

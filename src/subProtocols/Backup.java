@@ -86,6 +86,12 @@ public class Backup implements Runnable {
                     return;
                 }
 
+                Vector<Integer> peersThatStored = c.getPeersThatBackedUpChunk();
+                System.out.println("Peers that stored chunk: ");
+                for (Integer id: peersThatStored){
+                    System.out.println("\tNode with id " + id);
+                }
+
                 int receivedRepDegree = c.getReplicationDegree();
                 System.out.println("Received replication degree: " + receivedRepDegree);
                 if (receivedRepDegree == -1){

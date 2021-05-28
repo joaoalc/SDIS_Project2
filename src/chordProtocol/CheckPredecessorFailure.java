@@ -14,11 +14,11 @@ public class CheckPredecessorFailure implements Runnable {
     @Override
     public void run() {
 
-        System.out.println("---------- Check Predecessor Failure -------------");
+        //System.out.println("---------- Check Predecessor Failure -------------");
         // Send message to predecessor to check if it is alive
         FingerTableEntry predecessor = node.getPredecessor();
         if (predecessor == null){
-            System.out.println("-----------------------------");
+            //System.out.println("-----------------------------");
             return;
         }
 
@@ -29,12 +29,12 @@ public class CheckPredecessorFailure implements Runnable {
         if (ans == null){
             node.resetPredecessor();
         } else if (!ans.isAliveMessage()){
-            System.out.println("Error on checking predecessor [Message doesn't match expected type].");
-            System.out.println("Current node: " + node.getId() + ".  Target Node: " + predecessor.getId() + ".");
+            //System.out.println("Error on checking predecessor [Message doesn't match expected type].");
+            //System.out.println("Current node: " + node.getId() + ".  Target Node: " + predecessor.getId() + ".");
             return;
         }
 
-        System.out.println("-----------------------------");
+        //System.out.println("-----------------------------");
 
     }
 }

@@ -94,9 +94,9 @@ public class Node {
             e.printStackTrace();
         }
 
-        System.out.println("Generate id power: " + (int) Math.pow(2, M));
+        //System.out.println("Generate id power: " + (int) Math.pow(2, M));
         UUID uuid = UUID.nameUUIDFromBytes(hashed.getBytes(StandardCharsets.UTF_8));
-        System.out.println("Generate id uuid: " + uuid);
+        //System.out.println("Generate id uuid: " + uuid);
         int id = Math.floorMod(uuid.hashCode(), (int) Math.pow(2, M)); // uuid.hashCode() % (int) Math.pow(2, M);
         System.out.println("Id: " + id);
         return id;
@@ -140,24 +140,24 @@ public class Node {
 
     public FingerTableEntry findSuccessor(int id){
         FingerTableEntry successor = getFinger(0);
-        System.out.println("Find SUCCESSOR: target_id = " + id + "; node_id = " + this.id + "; Successor id = " + successor.getId() + ";");
+        //System.out.println("Find SUCCESSOR: target_id = " + id + "; node_id = " + this.id + "; Successor id = " + successor.getId() + ";");
         if (Helper.between(this.id, id, successor.getId()) || id == successor.getId()){
         //if (this.id < id && id <= successor.getId()){
-            System.out.println("Inside");
+            //System.out.println("Inside");
             return successor;
         } else {
             FingerTableEntry closest = closestNode(id);
-            System.out.println("Closest Node: " + closest.getId());
+            //System.out.println("Closest Node: " + closest.getId());
             if (closest.equals(thisEntry)){
-                System.out.println("Closest is equal to this node!");
+                //System.out.println("Closest is equal to this node!");
                 return thisEntry;
             }
 
             // Send message to closest node to find successor
             Message m = new Message(MessageType.FIND_SUCCESSOR, id);
-            System.out.println("Sending find successor message to node with id " + closest.getId() + " and address " + closest.getValue());
+            //System.out.println("Sending find successor message to node with id " + closest.getId() + " and address " + closest.getValue());
             Message ans = sender.sendWithAnswer(m, closest.getValue());
-            System.out.println("Received successor response");
+            //System.out.println("Received successor response");
 
             if (ans == null){
                 System.out.println("Answer is null!!!!!!!!!!!!!!!!!!!!!!");
@@ -192,7 +192,7 @@ public class Node {
         // successor = n'.find_successor(n)
 
         Message m = new Message(MessageType.JOIN, this.thisEntry);
-        System.out.println("Sending JOIN message to " + peerFromRingAddress.getAddress() + ":" + peerFromRingAddress.getPort());
+        //System.out.println("Sending JOIN message to " + peerFromRingAddress.getAddress() + ":" + peerFromRingAddress.getPort());
         Message ans = sender.sendWithAnswer(m, peerFromRingAddress);
 
         if (ans == null){
@@ -211,9 +211,9 @@ public class Node {
         }
 
         FingerTableEntry successor = ans.getData();
-        System.out.println("Successor found! " + successor.getId());
+        //System.out.println("Successor found! " + successor.getId());
         setFinger(0, successor);
-        System.out.println("Actual Successor: " + getFinger(0).getId());
+        //System.out.println("Actual Successor: " + getFinger(0).getId());
 
     }
 
@@ -221,10 +221,10 @@ public class Node {
         if (node.equals(thisEntry)){
             return;
         }
-        System.out.println("Notified!!!!");
+        //System.out.println("Notified!!!!");
         int id = node.getId();
-        System.out.println("Id received in notification: " + id);
-        System.out.println("Current node id: " + this.id);
+        //System.out.println("Id received in notification: " + id);
+        //System.out.println("Current node id: " + this.id);
         if (predecessor == null){
             this.predecessor = node;
         } else if (Helper.between(predecessor.getId(), id, this.id)){

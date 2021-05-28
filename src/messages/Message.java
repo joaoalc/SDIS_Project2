@@ -65,6 +65,10 @@ public class Message implements Serializable {
         this.info = info;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public boolean hasData(){
         return data != null;
     }

@@ -6,10 +6,7 @@ import chordProtocol.Node;
 import chordProtocol.Stabilization;
 import filesystem.ChunkFileSystemManager;
 import messages.MessageReceiver;
-import subProtocols.Backup;
-import subProtocols.Delete;
-import subProtocols.Restore;
-import subProtocols.State;
+import subProtocols.*;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -81,18 +78,21 @@ public class Peer implements RMIStub{
         Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(new MessageReceiver(port, node));
 
-        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(3);
+        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(4);
 
         Stabilization stabilization = new Stabilization(node);
-        scheduledExecutor.scheduleAtFixedRate(stabilization, 1, 10, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleAtFixedRate(stabilization, 1, 2, TimeUnit.SECONDS);
 
 
         FixFingers fixFingers = new FixFingers(node);
-        scheduledExecutor.scheduleAtFixedRate(fixFingers, 2, 10, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleAtFixedRate(fixFingers, 2, 2, TimeUnit.SECONDS);
 
 
         CheckPredecessorFailure checkPredecessorFailure = new CheckPredecessorFailure(node);
-        scheduledExecutor.scheduleAtFixedRate(checkPredecessorFailure, 3, 10, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleAtFixedRate(checkPredecessorFailure, 3, 2, TimeUnit.SECONDS);
+
+        Inform inform = new Inform(node);
+        scheduledExecutor.scheduleAtFixedRate(inform, 4, 2, TimeUnit.SECONDS);
 
     }
 
@@ -170,7 +170,7 @@ public class Peer implements RMIStub{
 
     @Override
     public void state() throws RemoteException {
-        State protocol = new State();
+        State protocol = new State(node);
         node.getThreadExecutor().execute(protocol);
     }
 

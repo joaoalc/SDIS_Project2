@@ -16,5 +16,7 @@ public enum MessageType {
     DELETE,
     DELETED,
     GETCHUNK,
-    CHUNK
+    CHUNK,
+    INFOSUCC,
+    INFOPRED
 }

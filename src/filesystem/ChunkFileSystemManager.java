@@ -37,6 +37,9 @@ public class ChunkFileSystemManager implements Serializable{
     private ConcurrentHashMap<String, Vector<Chunk>> restored_files;
     private ConcurrentHashMap<String, Boolean> hasReceivedPutChunk;
     private int currentCapacity;
+    private Vector<ChunkInfo> predecessorChunks;
+    private Vector<ChunkInfo> successorChunks;
+    private ConcurrentHashMap<String, Vector<Integer>> peersThatHaveChunk;
 
 
     /**
@@ -51,6 +54,25 @@ public class ChunkFileSystemManager implements Serializable{
         currentCapacity = INITIAL_CAPACITY;
         hasReceivedPutChunk = new ConcurrentHashMap<String, Boolean>();
         peerFiles = new Vector<FileInfo>();
+        predecessorChunks = new Vector<ChunkInfo>();
+        successorChunks = new Vector<ChunkInfo>();
+        peersThatHaveChunk = new ConcurrentHashMap<String, Vector<Integer>>();
+    }
+
+    public void setPredecessorChunks(Vector<ChunkInfo> predecessorChunks){
+        this.predecessorChunks = predecessorChunks;
+    }
+
+    public void setSuccessorChunks(Vector<ChunkInfo> successorChunks) {
+        this.successorChunks = successorChunks;
+    }
+
+    public Vector<ChunkInfo> getPredecessorChunks() {
+        return predecessorChunks;
+    }
+
+    public Vector<ChunkInfo> getSuccessorChunks() {
+        return successorChunks;
     }
 
     public Vector<FileInfo> getPeerFiles() {

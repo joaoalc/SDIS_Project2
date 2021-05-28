@@ -13,12 +13,23 @@ public class Stabilization implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("------- Stabilization ---------");
+        System.out.println("My id: " + node.getId());
+        if (node.getFinger(0) != null){
+            System.out.println("My successor: " + node.getFinger(0).getId());
+        } else {
+            System.out.println("My successor: null");
+        }
+        if (node.getPredecessor() != null){
+            System.out.println("My Predecessor: " + node.getPredecessor().getId());
+        } else {
+            System.out.println("My Predecessor: null");
+        }
+        //System.out.println("------- Stabilization ---------");
         // Ask successor for its predecessor and put it in the x variable
         FingerTableEntry succ = node.getFinger(0);
 
         if (succ == null){
-            System.out.println("Successor is null");
+            //System.out.println("Successor is null");
             return;
         }
 
@@ -26,24 +37,24 @@ public class Stabilization implements Runnable {
         Message ans = node.getSender().sendWithAnswer(m, succ.getValue());
 
         if (ans == null){
-            System.out.println("Answer is null on stabilization");
+            //System.out.println("Answer is null on stabilization");
             node.setFinger(0, new FingerTableEntry(-1, null));
             return;
         }
 
         if (!ans.isPredecessorMessage()){
-            System.out.println("Error on finding predecessor (stabilization) [Message doesn't match expected type].");
-            System.out.println("Current node: " + node.getId() + ".  Target Node: " + succ.getId() + ".");
+            //System.out.println("Error on finding predecessor (stabilization) [Message doesn't match expected type].");
+            //System.out.println("Current node: " + node.getId() + ".  Target Node: " + succ.getId() + ".");
             return;
         }
 
         if (!ans.hasData()){
-            System.out.println("No data");
+            //System.out.println("No data");
         } else {
             FingerTableEntry x = ans.getData();
 
             if (x == null){
-                System.out.println("X is null");
+                //System.out.println("X is null");
                 return;
             }
 
@@ -59,12 +70,12 @@ public class Stabilization implements Runnable {
         ans = node.getSender().sendWithAnswer(nm, succ.getValue());
 
         if (!ans.isNotifiedMessage()){
-            System.out.println("Error on finding predecessor (stabilization) [Message doesn't match expected type].");
-            System.out.println("Current node: " + node.getId() + ".  Target Node: " + succ.getId() + ".");
+            //System.out.println("Error on finding predecessor (stabilization) [Message doesn't match expected type].");
+            //System.out.println("Current node: " + node.getId() + ".  Target Node: " + succ.getId() + ".");
             return;
         }
 
-        System.out.println("----------------------");
+        //System.out.println("----------------------");
 
     }
 }

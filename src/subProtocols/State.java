@@ -1,5 +1,6 @@
 package subProtocols;
 
+import chordProtocol.Node;
 import filesystem.Chunk;
 import filesystem.ChunkFileSystemManager;
 import filesystem.ChunkInfo;
@@ -11,9 +12,11 @@ import java.util.Vector;
 public class State implements Runnable {
 
     private ChunkFileSystemManager manager;
+    private Node node;
 
-    public State(){
+    public State(Node node){
         manager = Peer.getManager();
+        this.node = node;
     }
 
     @Override
@@ -54,6 +57,25 @@ public class State implements Runnable {
         System.out.println("\nSpace:");
         System.out.println("Storage Capacity: " + manager.getCurrentCapacity());
         System.out.println("Amount of storage used: " + manager.getUsedStorage());
+
+        System.out.println("\nPredecessor (" + node.getPredecessor().getId() + ") chunks:");
+        if (manager.getPredecessorChunks().isEmpty()){
+            System.out.println("\tThe predecessor doesn't have any stored chunks...");
+        } else {
+            for (ChunkInfo ci: manager.getPredecessorChunks()){
+                System.out.println("\tChunk: " + ci.getFileId() + "-" + ci.getChunkNo());
+            }
+        }
+
+        System.out.println("\nSuccessor (" + node.getFinger(0).getId() + ") chunks:");
+        if (manager.getSuccessorChunks().isEmpty()){
+            System.out.println("\tThe successor doesn't have any stored chunks...");
+        } else {
+            for (ChunkInfo ci: manager.getSuccessorChunks()){
+                System.out.println("\tChunk: " + ci.getFileId() + "-" + ci.getChunkNo());
+            }
+        }
+
         System.out.println("----------------------------------------------------------");
     }
 }
