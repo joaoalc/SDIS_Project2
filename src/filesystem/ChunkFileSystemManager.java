@@ -724,8 +724,15 @@ public class ChunkFileSystemManager implements Serializable{
     public Chunk getChunkFromFile(File f, int replicationDegree, int chunkNo, String fileId) throws FileNotFoundException, IOException{
         FileInputStream fis = new FileInputStream(f);
         int offset = (chunkNo - 1) * 64000;
-        byte[] buffer = new byte[(int)(f.length()-offset)];
-        fis.read(buffer, offset, (int)(f.length()-offset));
+        fis.getChannel().position(offset);
+        int len = Math.min(64000, (int)(f.length()-offset));
+        byte[] buffer = new byte[len];
+        System.out.println("Offset: " + offset);
+        System.out.println("Chunk no: " + chunkNo);
+        System.out.println("Len: " + len);
+        System.out.println("Data length: " + f.length());
+        int read = fis.read(buffer, 0, len);
+        System.out.println("Bytes read: " + read);
         return new Chunk(fileId, chunkNo, buffer, replicationDegree, Peer.getId());
     }
 
