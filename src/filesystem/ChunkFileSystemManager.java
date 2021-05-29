@@ -62,6 +62,19 @@ public class ChunkFileSystemManager implements Serializable{
         this.entry = entry;
     }
 
+    public void setChunkRepDegree(String chunkName, int repDegree){
+        chunksCurrentReplicationDegrees.put(chunkName, repDegree);
+    }
+
+    public int getFileRepDegree(String fileId){
+        for (FileInfo fi: backedUpFiles){
+            if (fi.getFileId().equals(fileId)){
+                return fi.getReplicationDegree();
+            }
+        }
+        return -1;
+    }
+
     public FileInfo getFileInfoFromFileId(String fileId){
         for (FileInfo fi: peerFiles){
             if (fi.getFileId().equals(fileId)){

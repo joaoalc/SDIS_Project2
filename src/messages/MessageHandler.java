@@ -84,10 +84,10 @@ public class MessageHandler {
                 SubProtocolsData predInfoContent = message.getContent();
                 handlePredInfo(predInfoContent);
                 break;
-            case DO_BACKUP:
+            case DECREASE_REP_DEGREE:
                 System.out.println("Received DO_BACKUP");
                 ChunkInfo chunkInfo = message.getInfo();
-                handleDoBackup(chunkInfo);
+                handleDecreaseRepDegree(chunkInfo);
                 break;
             default:
                 System.out.println("DEFAULT");
@@ -361,7 +361,7 @@ public class MessageHandler {
         Peer.serialize();
     }
 
-    private void handleDoBackup(ChunkInfo chunkInfo){
+    private void handleDecreaseRepDegree(ChunkInfo chunkInfo){
 
         Message answer = new Message(MessageType.ALIVE, Peer.getId());
         try{
@@ -375,14 +375,25 @@ public class MessageHandler {
             return;
         }
 
-        try{
-            Thread.sleep(4000);
-        } catch(InterruptedException e){
+        Peer.getManager().decreaseChunkReplicationDegree(chunkInfo.getFileId() + "-" + chunkInfo.getChunkNo());
+        int fileRepDegree = Peer.getManager().getFileRepDegree(chunkInfo.getFileId());
+        int currentChunkRepDegree = Peer.getManager().getChunkReplicationDegree(chunkInfo.getFileId() + "-" + chunkInfo.getChunkNo());
+        if (fileRepDegree == -1){
+            System.out.println("Error");
             return;
         }
 
-        Backup protocol = new Backup(chunkInfo.getFileId() + "-" + chunkInfo.getChunkNo(), chunkInfo.getReplicationDegree(), node, true);
-        node.getThreadExecutor().execute(protocol);
+        if (currentChunkRepDegree < fileRepDegree){
+            try{
+                Thread.sleep(4000);
+            } catch(InterruptedException e){
+                return;
+            }
+
+            Backup protocol = new Backup(chunkInfo.getFileId() + "-" + chunkInfo.getChunkNo(), chunkInfo.getReplicationDegree(), node, true);
+            node.getThreadExecutor().execute(protocol);
+        }
+
     }
 
 }

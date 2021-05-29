@@ -20,7 +20,7 @@ public class MessageSender {
             ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
             out.writeObject(message);
         } catch(IOException e){
-            e.printStackTrace();
+            System.out.println("Can't send message...");
             return null;
         }
 
@@ -36,7 +36,7 @@ public class MessageSender {
             }
             s.close();
         } catch (IOException e){
-            e.printStackTrace();
+            System.out.println("Can't receive answer...");
             return null;
         }
 

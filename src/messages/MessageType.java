@@ -19,5 +19,5 @@ public enum MessageType {
     CHUNK,
     INFOSUCC,
     INFOPRED,
-    DO_BACKUP
+    DECREASE_REP_DEGREE
 }

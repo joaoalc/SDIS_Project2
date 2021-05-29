@@ -61,6 +61,8 @@ public class Backup implements Runnable {
 
         System.out.println("Starting single chunk backup.");
 
+        int replicationDegree = this.replicationDegree + 1;
+
         String[] parts = filename.split("-");
         String fileId = parts[0];
         int chunkNo = Integer.parseInt(parts[1]);
@@ -89,7 +91,7 @@ public class Backup implements Runnable {
             return;
         }
 
-        if (answer.isStoredMessage()){
+        if (answer.isStoredMessage() || answer.isFailedMessage()){
             SubProtocolsData c = answer.getContent();
             if (content == null){
                 System.out.println("Content is null");
@@ -115,10 +117,7 @@ public class Backup implements Runnable {
                 Peer.serialize();
                 return;
             }
-        } else if (answer.isFailedMessage()){
-            System.out.println("Backup failed");
-            Peer.serialize();
-            return;
+            manager.setChunkRepDegree(fileId + "-" + chunk.getChunkNo(), receivedRepDegree);
         } else {
             System.out.println("Error on messages");
             Peer.serialize();
@@ -131,6 +130,7 @@ public class Backup implements Runnable {
     public void runFullBackup(){
         File f = new File("files/peer" + Peer.getId() + "/peer_files/" + this.filename);
         Vector<Chunk> chunks = null;
+        int replicationDegree = this.replicationDegree + 1;
         try{
             chunks = manager.getChunksFromFile(f, replicationDegree);
         } catch (Exception e){
@@ -146,7 +146,7 @@ public class Backup implements Runnable {
             return;
         }
 
-        Peer.getManager().addFile(new FileInfo(this.filename, fileId, replicationDegree));
+        Peer.getManager().addFile(new FileInfo(this.filename, fileId, this.replicationDegree));
 
         for (int i = 0; i < chunks.size(); i++){
 
@@ -162,7 +162,7 @@ public class Backup implements Runnable {
                 return;
             }
 
-            if (answer.isStoredMessage()){
+            if (answer.isStoredMessage() || answer.isFailedMessage()){
                 SubProtocolsData c = answer.getContent();
                 if (content == null){
                     System.out.println("Content is null");
@@ -188,10 +188,7 @@ public class Backup implements Runnable {
                     Peer.serialize();
                     return;
                 }
-            } else if (answer.isFailedMessage()){
-                System.out.println("Backup failed");
-                Peer.serialize();
-                return;
+                manager.setChunkRepDegree(fileId + "-" + chunks.get(i).getChunkNo(), receivedRepDegree);
             } else {
                 System.out.println("Error on messages");
                 Peer.serialize();
@@ -199,6 +196,7 @@ public class Backup implements Runnable {
             }
 
         }
+
 
         manager.addBackedUpFile(new FileInfo(this.filename, fileId, replicationDegree));
 

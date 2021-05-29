@@ -48,7 +48,7 @@ public class CheckPredecessorFailure implements Runnable {
                     System.out.println("Entry is null.");
                     return;
                 }
-                Message m1 = new Message(MessageType.DO_BACKUP, ci);
+                Message m1 = new Message(MessageType.DECREASE_REP_DEGREE, ci);
                 Message answer = node.getSender().sendWithAnswer(m1, entry.getValue());
                 if (answer == null){
                     System.out.println("Answer is null");
