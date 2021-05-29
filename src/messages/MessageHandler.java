@@ -186,7 +186,7 @@ public class MessageHandler {
             return;
         }
 
-        content.addToPeersThatStoreChunk(node.getId());
+        content.addToPeersThatStoreChunk(node.getEntry());
 
         int newRepDegree = content.getReplicationDegree() - 1;
         if (newRepDegree <= 0){

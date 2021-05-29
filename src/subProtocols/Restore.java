@@ -1,5 +1,6 @@
 package subProtocols;
 
+import chordProtocol.FingerTableEntry;
 import chordProtocol.Node;
 import filesystem.Chunk;
 import filesystem.ChunkFileSystemManager;
@@ -35,6 +36,30 @@ public class Restore implements Runnable {
         return null;
     }
 
+    private Chunk askForChunk(Vector<FingerTableEntry> targets, Message m){
+
+        for (FingerTableEntry entry: targets) {
+            Message answer = node.getSender().sendWithAnswer(m, entry.getValue());
+
+            if (answer == null) {
+                continue;
+            }
+
+            SubProtocolsData answerContent = answer.getContent();
+            if (answerContent == null) {
+                continue;
+            }
+
+            Chunk c = answerContent.getChunk();
+            if (c == null) {
+                continue;
+            } else {
+                return c;
+            }
+        }
+        return null;
+    }
+
     @Override
     public void run() {
         System.out.println("Restore starting");
@@ -59,34 +84,11 @@ public class Restore implements Runnable {
 
             // Enviar mensagem a dizer que chunk queremos
             Message m = new Message(MessageType.GETCHUNK, new ChunkInfo(fileId, currentChunkNo, -1, -1, -1, node.getEntry()));
+            Vector<FingerTableEntry> targets = manager.getPeersThatHaveChunk(fileId + "-" + currentChunkNo);
+            System.out.println("Targets HEREEEEEEEEEEEEEEEEE");
+            System.out.println(targets.size());
 
-            Message answer = null;
-            int tryNo = 0;
-            int delay = 1000;
-            do{
-                // Enviar GetChunk
-                answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
-                try{
-                    Thread.sleep(delay);
-                } catch(InterruptedException e){
-                    e.printStackTrace();
-                }
-                delay *= 2;
-                tryNo++;
-            } while(answer == null && tryNo < 5);
-
-            if (answer == null){
-                System.out.println("Restore protocol failed");
-                return;
-            }
-
-            SubProtocolsData answerContent = answer.getContent();
-            if (answerContent == null){
-                System.out.println("Error on restore, answer content is null");
-                return;
-            }
-
-            Chunk c = answerContent.getChunk();
+            Chunk c = askForChunk(targets, m);
             if (c == null){
                 System.out.println("Error on restore, chunk is null");
                 return;

@@ -22,6 +22,10 @@ import java.util.concurrent.TimeUnit;
 
 /*
 Client:
+./peer.sh 1 Peer1 localhost 8000
+./peer.sh 2 Peer2 localhost 8001 localhost 8000
+./test.sh Peer1 BACKUP teste.txt 1
+
 java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer 1 Peer1 localhost 8000
 java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer 2 Peer2 localhost 8001 localhost 8000
 java peers.TestApp Peer1 BACKUP teste.txt 1

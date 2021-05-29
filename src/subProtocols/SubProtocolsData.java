@@ -1,5 +1,6 @@
 package subProtocols;
 
+import chordProtocol.FingerTableEntry;
 import filesystem.Chunk;
 import filesystem.ChunkInfo;
 
@@ -13,7 +14,7 @@ public class SubProtocolsData implements Serializable {
     private Chunk c;
     private int senderId;
     private Vector<ChunkInfo> storedChunks;
-    private Vector<Integer> peersThatBackedUpChunk;
+    private Vector<FingerTableEntry> peersThatBackedUpChunk;
 
     public SubProtocolsData(int senderId){
         replicationDegree = -1;
@@ -21,18 +22,18 @@ public class SubProtocolsData implements Serializable {
         fileId = null;
         c = null;
         storedChunks = null;
-        peersThatBackedUpChunk = new Vector<Integer>();
+        peersThatBackedUpChunk = new Vector<FingerTableEntry>();
     }
 
-    public void addToPeersThatStoreChunk(int id){
-        peersThatBackedUpChunk.add(id);
+    public void addToPeersThatStoreChunk(FingerTableEntry entry){
+        peersThatBackedUpChunk.add(entry);
     }
 
-    public Vector<Integer> getPeersThatBackedUpChunk() {
+    public Vector<FingerTableEntry> getPeersThatBackedUpChunk() {
         return peersThatBackedUpChunk;
     }
 
-    public void setPeersThatBackedUpChunk(Vector<Integer> peersThatBackedUpChunk) {
+    public void setPeersThatBackedUpChunk(Vector<FingerTableEntry> peersThatBackedUpChunk) {
         this.peersThatBackedUpChunk = peersThatBackedUpChunk;
     }
 

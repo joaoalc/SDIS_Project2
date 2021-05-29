@@ -1,5 +1,6 @@
 package subProtocols;
 
+import chordProtocol.FingerTableEntry;
 import chordProtocol.Node;
 import filesystem.Chunk;
 import filesystem.ChunkFileSystemManager;
@@ -95,11 +96,13 @@ public class Backup implements Runnable {
                 return;
             }
 
-            Vector<Integer> peersThatStored = c.getPeersThatBackedUpChunk();
+            Vector<FingerTableEntry> peersThatStored = c.getPeersThatBackedUpChunk();
             System.out.println("Peers that stored chunk: ");
-            for (Integer id: peersThatStored){
-                System.out.println("\tNode with id " + id);
+            for (FingerTableEntry entry: peersThatStored){
+                System.out.println("\tNode with id " + entry.getId());
             }
+
+            manager.setPeersThatHaveChunk(fileId + "-" + chunk.getChunkNo(), peersThatStored);
 
             int receivedRepDegree = c.getReplicationDegree();
             System.out.println("Received replication degree: " + receivedRepDegree);
@@ -166,11 +169,13 @@ public class Backup implements Runnable {
                     return;
                 }
 
-                Vector<Integer> peersThatStored = c.getPeersThatBackedUpChunk();
+                Vector<FingerTableEntry> peersThatStored = c.getPeersThatBackedUpChunk();
                 System.out.println("Peers that stored chunk: ");
-                for (Integer id: peersThatStored){
-                    System.out.println("\tNode with id " + id);
+                for (FingerTableEntry entry: peersThatStored){
+                    System.out.println("\tNode with id " + entry.getId());
                 }
+
+                manager.setPeersThatHaveChunk(fileId + "-" + chunks.get(i).getChunkNo(), peersThatStored);
 
                 int receivedRepDegree = c.getReplicationDegree();
                 System.out.println("Received replication degree: " + receivedRepDegree);
