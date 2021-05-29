@@ -294,9 +294,18 @@ public class MessageHandler {
                 e.printStackTrace();
             }
             return;
+        } else {
+            SubProtocolsData data = null;
+            Message sendBack = new Message(MessageType.CHUNK, data);
+            try{
+                sendAnswer(sendBack);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
         }
 
         // Doesn't have the requested chunk, send GetChunk to successor
+        /*
         Message m = new Message(MessageType.GETCHUNK, ci);
         Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
 
@@ -309,7 +318,7 @@ public class MessageHandler {
             sendAnswer(answer);
         } catch (IOException e){
             e.printStackTrace();
-        }
+        }*/
 
     }
 
