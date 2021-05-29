@@ -61,7 +61,7 @@ public class Backup implements Runnable {
 
         System.out.println("Starting single chunk backup.");
 
-        int replicationDegree = this.replicationDegree + 1;
+        //int replicationDegree = this.replicationDegree + 1;
 
         String[] parts = filename.split("-");
         String fileId = parts[0];
@@ -130,7 +130,7 @@ public class Backup implements Runnable {
     public void runFullBackup(){
         File f = new File("files/peer" + Peer.getId() + "/peer_files/" + this.filename);
         Vector<Chunk> chunks = null;
-        int replicationDegree = this.replicationDegree + 1;
+        //int replicationDegree = this.replicationDegree + 1;
         try{
             chunks = manager.getChunksFromFile(f, replicationDegree);
         } catch (Exception e){

@@ -363,13 +363,6 @@ public class MessageHandler {
 
     private void handleDecreaseRepDegree(ChunkInfo chunkInfo){
 
-        Message answer = new Message(MessageType.ALIVE, Peer.getId());
-        try{
-            sendAnswer(answer);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
         if (chunkInfo == null){
             System.out.println("ChunkInfo is null.");
             return;
@@ -381,6 +374,13 @@ public class MessageHandler {
         if (fileRepDegree == -1){
             System.out.println("Error");
             return;
+        }
+
+        Message answer = new Message(MessageType.ALIVE, Peer.getId());
+        try{
+            sendAnswer(answer);
+        } catch (IOException e){
+            e.printStackTrace();
         }
 
         if (currentChunkRepDegree < fileRepDegree){

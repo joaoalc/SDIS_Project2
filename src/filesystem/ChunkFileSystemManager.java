@@ -427,7 +427,7 @@ public class ChunkFileSystemManager implements Serializable{
      *
      * @return Returns a vector containing the sorted chunks
      */
-    private Vector<ChunkSortable> getChunksByDeletePriority(){
+    /*private Vector<ChunkSortable> getChunksByDeletePriority(){
         Vector<ChunkSortable> chunks = new Vector<ChunkSortable>();
 
         for (ChunkInfo c: storedChunks){
@@ -439,8 +439,7 @@ public class ChunkFileSystemManager implements Serializable{
         Collections.sort(chunks, Collections.reverseOrder());
 
         return chunks;
-
-    }
+    }*/
 
     /**
      * Deletes a chunk from the peer's filesystem
@@ -449,11 +448,11 @@ public class ChunkFileSystemManager implements Serializable{
      *
      * @return Returns true if successful, false otherwise
      */
-    private boolean deleteChunkFromFilesystem(String chunkName){
+    public boolean deleteChunkFromFilesystem(String chunkName){
 
-        if (!removeFromStoredChunks(chunkName)){
+        /*if (!removeFromStoredChunks(chunkName)){
             return false;
-        }
+        }*/
         File f  = new File("files/peer" + Peer.getId() + "/chunks/" + chunkName);
         return f.delete();
     }
@@ -496,8 +495,7 @@ public class ChunkFileSystemManager implements Serializable{
         return true;
 
     }
-     */
-
+*/
     /**
      * Checks if a chunk is from one of the peer's files
      *
@@ -688,7 +686,7 @@ public class ChunkFileSystemManager implements Serializable{
      *
      * @return Returns true if successful, false otherwise
      */
-    private boolean removeFromStoredChunks(String chunkName){
+    public boolean removeFromStoredChunks(String chunkName){
         for (ChunkInfo c: storedChunks){
             if ((c.getFileId() + "-" + c.getChunkNo()).equals(chunkName)){
                 storedChunks.remove(c);

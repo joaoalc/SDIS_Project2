@@ -169,7 +169,8 @@ public class Peer implements RMIStub{
 
     @Override
     public void reclaim(int newCapacity) throws RemoteException {
-
+        Reclaim protocol = new Reclaim(newCapacity, node);
+        node.getThreadExecutor().execute(protocol);
     }
 
     @Override
