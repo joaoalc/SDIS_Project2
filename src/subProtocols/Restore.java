@@ -112,23 +112,10 @@ public class Restore implements Runnable {
                 return;
             }
 
-            //restoredChunks.add(c);
             currentChunkNo++;
-
-            /*
-            try{
-                Thread.sleep(500);
-            } catch(InterruptedException e){
-                e.printStackTrace();
-            }*/
 
         }
 
-        //Collections.sort(restoredChunks);
-
-        // Check order of the received chunks
-
-        //manager.writeChunksToFile(restored, restoredChunks);
         Peer.serialize();
 
     }

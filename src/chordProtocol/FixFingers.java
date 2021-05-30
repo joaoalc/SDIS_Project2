@@ -1,36 +1,35 @@
 package chordProtocol;
 
+/**
+ * The class FixFingers is run periodically and is responsible for making sure the node's finger table values are correct
+ */
 public class FixFingers implements Runnable {
 
     private Node node;
 
+    /**
+     * Constructor for the FixFingers class
+     *
+     * @param n The node
+     *
+     */
     public FixFingers(Node n){
         node = n;
     }
 
+    /**
+     * Runs the Fix Fingers routine
+     */
     @Override
     public void run() {
-        System.out.println("Fix fingers");
-        //node.displayFingerTable();
-        //System.out.println("-------- Fix Fingers ---------");
+        System.out.println("[Fix Fingers] Starting");
         for (int next = 1; next <= Node.M; next++){
             int successorToFindId = (node.getId() + (int) Math.pow(2, next-1)) % (int) Math.pow(2, Node.M);
             // Find successor of id successorToFindId and update the corresponding finger
             FingerTableEntry successor = node.findSuccessor(successorToFindId);
-            if (successor == null){
-                //System.out.println("Error fixing fingers [successor is null].");
-                //System.out.println("Current node: " + node.getId() + ".  Target Node: " + successor.getId() + ".");
-                //break;
-            } else {
-                //System.out.println("[FixFingers] Iteration " + (next-1) + ": successor_of_node" + successorToFindId + "=" + successor.getId());
-            }
 
             node.setFinger(next-1, successor);
         }
-        //System.out.println("-----------------------");
-
-        //node.displayFingerTable();
-        //System.out.println("Predecessor: " + node.getPredecessor().getId());
 
     }
 }

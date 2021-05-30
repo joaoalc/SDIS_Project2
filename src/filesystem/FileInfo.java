@@ -1,10 +1,4 @@
-/**
- * File:    FileInfo.java
- *
- * Authors:  Tomás Costa Fontes (up201806252@fe.up.pt), Pedro Emanuel de Sousa Pinto (up201806251@fe.up.pt)
- * Date:     april 2021
- *
- */
+
 
 package filesystem;
 

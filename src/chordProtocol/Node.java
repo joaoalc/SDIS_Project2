@@ -11,8 +11,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
+/**
+ *  The class Node represents a chord node
+ */
 public class Node {
 
     public static final int M = 5;
@@ -23,6 +25,12 @@ public class Node {
     private MessageSender sender;
     private ExecutorService threadExecutor;
 
+    /**
+     * Constructor for the Node class
+     *
+     * @param address The address of the node
+     *
+     */
     public Node(InetSocketAddress address){
         this.id = generateId(address);
         System.out.println("Node id: " + this.id);
@@ -34,6 +42,9 @@ public class Node {
         initFingerTable();
     }
 
+    /**
+     * Displays the node's finger table on the screen
+     */
     public void displayFingerTable(){
         System.out.println("------ Finger Table ----------");
         for (int i = 1; i <= M; i++){
@@ -48,34 +59,73 @@ public class Node {
         }
     }
 
+    /**
+     * Getter for the threadExecutor attribute
+     *
+     * @return Returns the threadExecutor attribute
+     */
     public ExecutorService getThreadExecutor() {
         return threadExecutor;
     }
 
+    /**
+     * Getter for the thisEntry attribute
+     *
+     * @return Returns the thisEntry attribute
+     */
     public FingerTableEntry getEntry(){
         return thisEntry;
     }
 
+    /**
+     * Getter for the sender attribute
+     *
+     * @return Returns the sender attribute
+     */
     public MessageSender getSender(){
         return sender;
     }
 
+    /**
+     * Getter for the predecessor attribute
+     *
+     * @return Returns the predecessor attribute
+     */
     public FingerTableEntry getPredecessor(){
         return predecessor;
     }
 
+    /**
+     * Resets the node's predecessor
+     */
     public void resetPredecessor(){
         predecessor = null;
     }
 
+    /**
+     * Setter for the predecessor attribute
+     *
+     * @param  entry The new value for the predecessor attribute
+     */
     public void setPredecessor(FingerTableEntry entry){
         predecessor = entry;
     }
 
+    /**
+     * Getter for the id attribute
+     *
+     * @return Returns the id attribute
+     */
     public int getId() {
         return id;
     }
 
+    /**
+     * Generates an id for the node from its address
+     *
+     * @param address The node's address
+     * @return Returns the node's id
+     */
     private int generateId(InetSocketAddress address){
         int port = address.getPort();
         String addr = address.toString();
@@ -94,20 +144,27 @@ public class Node {
             e.printStackTrace();
         }
 
-        //System.out.println("Generate id power: " + (int) Math.pow(2, M));
         UUID uuid = UUID.nameUUIDFromBytes(hashed.getBytes(StandardCharsets.UTF_8));
-        //System.out.println("Generate id uuid: " + uuid);
         int id = Math.floorMod(uuid.hashCode(), (int) Math.pow(2, M)); // uuid.hashCode() % (int) Math.pow(2, M);
         System.out.println("Id: " + id);
         return id;
     }
 
+    /**
+     * Initializes the node's finger table
+     */
     private void initFingerTable(){
         for (int i = 0; i < M; i++){
             fingerTable[i] = new FingerTableEntry(-1, null);
         }
     }
 
+    /**
+     * Sets the finger table value on a certain index
+     *
+     * @param idx The index of the value on the finger table
+     * @param  entry The new value for the originalEntry attribute
+     */
     public boolean setFinger(int idx, FingerTableEntry entry){
         if (idx < 0 || idx >= M){
             return false;
@@ -119,6 +176,12 @@ public class Node {
         return true;
     }
 
+    /**
+     * Gets the value from a certain index on the node's finger table
+     *
+     * @param idx The index of the finger to get
+     * @return Returns the finger at index idx on the node's finger table
+     */
     public FingerTableEntry getFinger(int idx) throws RuntimeException {
         if (idx < 0 || idx >= M){
             throw new RuntimeException("Finger Table index out of bounds");
@@ -126,41 +189,44 @@ public class Node {
         return fingerTable[idx];
     }
 
+    /**
+     * Gets the closest node of a certain received node
+     *
+     * @param id The id of the node to find the closest
+     * @return Returns the closest node to the received one
+     */
     private FingerTableEntry closestNode(int id){
         for (int i = M-1; i >= 0; i--){
             FingerTableEntry entry = getFinger(i);
             int entryId = entry.getId();
             if (Helper.between(this.id, entryId, id)){
-            //if (entryId > this.id && entryId < id){
                 return entry;
             }
         }
         return thisEntry;
     }
 
+    /**
+     * Finds the successor of a certain node
+     *
+     * @param id The id of the node
+     * @return Returns the successor of the received node
+     */
     public FingerTableEntry findSuccessor(int id){
         FingerTableEntry successor = getFinger(0);
-        //System.out.println("Find SUCCESSOR: target_id = " + id + "; node_id = " + this.id + "; Successor id = " + successor.getId() + ";");
         if (Helper.between(this.id, id, successor.getId()) || id == successor.getId()){
-        //if (this.id < id && id <= successor.getId()){
-            //System.out.println("Inside");
             return successor;
         } else {
             FingerTableEntry closest = closestNode(id);
-            //System.out.println("Closest Node: " + closest.getId());
             if (closest.equals(thisEntry)){
-                //System.out.println("Closest is equal to this node!");
                 return thisEntry;
             }
 
             // Send message to closest node to find successor
             Message m = new Message(MessageType.FIND_SUCCESSOR, id);
-            //System.out.println("Sending find successor message to node with id " + closest.getId() + " and address " + closest.getValue());
             Message ans = sender.sendWithAnswer(m, closest.getValue());
-            //System.out.println("Received successor response");
 
             if (ans == null){
-                System.out.println("Answer is null!!!!!!!!!!!!!!!!!!!!!!");
                 return null;
             }
 
@@ -180,19 +246,23 @@ public class Node {
         }
     }
 
+    /**
+     * Creates a new chord ring
+     */
     public void createNewChordRing(){
         this.predecessor = null;
         this.setFinger(0, thisEntry);
     }
 
+    /**
+     * Joins an existing chord ring
+     *
+     * @param peerFromRingAddress The address of the known peer from the existing chord ring
+     */
     public void joinExistingChordRing(InetSocketAddress peerFromRingAddress){
         this.predecessor = null;
 
-        // Enviar mensagem ao peerFromRingAddress a dizer para encontrar o successor deste node
-        // successor = n'.find_successor(n)
-
         Message m = new Message(MessageType.JOIN, this.thisEntry);
-        //System.out.println("Sending JOIN message to " + peerFromRingAddress.getAddress() + ":" + peerFromRingAddress.getPort());
         Message ans = sender.sendWithAnswer(m, peerFromRingAddress);
 
         if (ans == null){
@@ -211,20 +281,20 @@ public class Node {
         }
 
         FingerTableEntry successor = ans.getData();
-        //System.out.println("Successor found! " + successor.getId());
         setFinger(0, successor);
-        //System.out.println("Actual Successor: " + getFinger(0).getId());
 
     }
 
+    /**
+     * Method to be executed when the node receives a notification
+     *
+     * @param node The node that sent the notification
+     */
     public void whenNotified(FingerTableEntry node){
         if (node.equals(thisEntry)){
             return;
         }
-        //System.out.println("Notified!!!!");
         int id = node.getId();
-        //System.out.println("Id received in notification: " + id);
-        //System.out.println("Current node id: " + this.id);
         if (predecessor == null){
             this.predecessor = node;
         } else if (Helper.between(predecessor.getId(), id, this.id)){

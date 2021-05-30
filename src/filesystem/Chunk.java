@@ -1,10 +1,3 @@
-/**
- * File:    Chunk.java
- *
- * Authors:  Tomás Costa Fontes (up201806252@fe.up.pt), Pedro Emanuel de Sousa Pinto (up201806251@fe.up.pt)
- * Date:     april 2021
- *
- */
 
 package filesystem;
 
@@ -43,18 +36,38 @@ public class Chunk implements Comparable<Chunk>, Serializable {
         this.originalEntry = null;
     }
 
+    /**
+     * Setter for the originalEntry attribute
+     *
+     * @param  entry The new value for the originalEntry attribute
+     */
     public void setOriginalEntry(FingerTableEntry entry){
         originalEntry = entry;
     }
 
+    /**
+     * Getter for the originalEntry attribute
+     *
+     * @return Returns the originalEntry attribute
+     */
     public FingerTableEntry getOriginalEntry() {
         return originalEntry;
     }
 
+    /**
+     * Getter for the originalPeerId attribute
+     *
+     * @return Returns the OriginalPeerId attribute
+     */
     public int getOriginalPeerId() {
         return originalPeerId;
     }
 
+    /**
+     * Setter for the originalPeerId attribute
+     *
+     * @param  originalPeerId The new value for the originalPeerId attribute
+     */
     public void setOriginalPeerId(int originalPeerId) {
         this.originalPeerId = originalPeerId;
     }

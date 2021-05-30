@@ -3,6 +3,9 @@ package chordProtocol;
 import messages.Message;
 import messages.MessageType;
 
+/**
+ * The class Stabilization is run periodically and is responsible for making sure the finger table is correct
+ */
 public class Stabilization implements Runnable {
 
     private Node node;
@@ -26,12 +29,10 @@ public class Stabilization implements Runnable {
         } else {
             System.out.println("My Predecessor: null");
         }
-        //System.out.println("------- Stabilization ---------");
         // Ask successor for its predecessor and put it in the x variable
         FingerTableEntry succ = node.getFinger(0);
 
         if (succ == null){
-            //System.out.println("Successor is null");
             return;
         }
 
@@ -39,24 +40,19 @@ public class Stabilization implements Runnable {
         Message ans = node.getSender().sendWithAnswer(m, succ.getValue());
 
         if (ans == null){
-            //System.out.println("Answer is null on stabilization");
             node.setFinger(0, new FingerTableEntry(-1, null));
             return;
         }
 
         if (!ans.isPredecessorMessage()){
-            //System.out.println("Error on finding predecessor (stabilization) [Message doesn't match expected type].");
-            //System.out.println("Current node: " + node.getId() + ".  Target Node: " + succ.getId() + ".");
             return;
         }
 
         if (!ans.hasData()){
-            //System.out.println("No data");
         } else {
             FingerTableEntry x = ans.getData();
 
             if (x == null){
-                //System.out.println("X is null");
                 return;
             }
 
@@ -72,12 +68,8 @@ public class Stabilization implements Runnable {
         ans = node.getSender().sendWithAnswer(nm, succ.getValue());
 
         if (!ans.isNotifiedMessage()){
-            //System.out.println("Error on finding predecessor (stabilization) [Message doesn't match expected type].");
-            //System.out.println("Current node: " + node.getId() + ".  Target Node: " + succ.getId() + ".");
             return;
         }
-
-        //System.out.println("----------------------");
 
     }
 }

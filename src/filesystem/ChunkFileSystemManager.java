@@ -1,10 +1,3 @@
-/**
- * File:    ChunkFileSystemManager.java
- *
- * Authors:  Tomás Costa Fontes (up201806252@fe.up.pt), Pedro Emanuel de Sousa Pinto (up201806251@fe.up.pt)
- * Date:     april 2021
- *
- */
 
 package filesystem;
 
@@ -21,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -42,13 +34,11 @@ public class ChunkFileSystemManager implements Serializable{
     private Vector<FileInfo> peerFiles;
     private ConcurrentHashMap<String, Integer> chunksCurrentReplicationDegrees;
     private ConcurrentHashMap<String, Vector<Chunk>> restored_files;
-    private ConcurrentHashMap<String, Boolean> hasReceivedPutChunk;
     private int currentCapacity;
     private Vector<ChunkInfo> predecessorChunks;
     private Vector<ChunkInfo> successorChunks;
     private ConcurrentHashMap<String, Vector<FingerTableEntry>> peersThatHaveChunk;
     private FingerTableEntry entry;
-
 
     /**
      * Constructor for the ChunkFileSystemManager class
@@ -60,7 +50,6 @@ public class ChunkFileSystemManager implements Serializable{
         restored_files = new ConcurrentHashMap<String, Vector<Chunk>>();
         backedUpFiles = new Vector<FileInfo>();
         currentCapacity = INITIAL_CAPACITY;
-        hasReceivedPutChunk = new ConcurrentHashMap<String, Boolean>();
         peerFiles = new Vector<FileInfo>();
         predecessorChunks = new Vector<ChunkInfo>();
         successorChunks = new Vector<ChunkInfo>();
@@ -116,53 +105,6 @@ public class ChunkFileSystemManager implements Serializable{
 
     public Vector<FileInfo> getPeerFiles() {
         return peerFiles;
-    }
-
-    /**
-     * Adds a chunk to the vector that keeps track of whether that chunk has already been backed up or not
-     *
-     * @param chunkName The name (fileId-chunkNo) of the chunk to be added
-     */
-    public void addToHasReceivedPutChunk(String chunkName){
-        if (!hasReceivedPutChunk.containsKey(chunkName)){
-            hasReceivedPutChunk.put(chunkName, false);
-        }
-    }
-
-    /**
-     * Marks a certain chunk as backed up
-     *
-     * @param chunkName The name (fileId-chunkNo) of the chunk to be marked
-     */
-    public void setHasReceivedPutChunk(String chunkName){
-        if (hasReceivedPutChunk.containsKey(chunkName)){
-            hasReceivedPutChunk.put(chunkName, true);
-        }
-    }
-
-    /**
-     * Checks if a chunk has already been backed up or not
-     *
-     * @param chunkName The name (fileId-chunkNo) of the chunk to be marked
-     *
-     * @return Returns true if the chunk has already been backed up, false otherwise
-     */
-    public boolean getHasReceivedPutChunk(String chunkName){
-        if (hasReceivedPutChunk.containsKey(chunkName)){
-            return hasReceivedPutChunk.get(chunkName);
-        }
-        return true;
-    }
-
-    /**
-     * Removes a certain chunk from the vector that keeps track of whether that chunk has already been backed up or not
-     *
-     * @param chunkName The name (fileId-chunkNo) of the chunk to be marked
-     */
-    public void removeFromHasReceivedPutChunk(String chunkName){
-        if (hasReceivedPutChunk.containsKey(chunkName)){
-            hasReceivedPutChunk.remove(chunkName);
-        }
     }
 
     /**
@@ -432,25 +374,6 @@ public class ChunkFileSystemManager implements Serializable{
     }
 
     /**
-     * Gets the chunks stored in the peer's filesystem sorted by their current replication degree in relation to their desired one
-     *
-     * @return Returns a vector containing the sorted chunks
-     */
-    /*private Vector<ChunkSortable> getChunksByDeletePriority(){
-        Vector<ChunkSortable> chunks = new Vector<ChunkSortable>();
-
-        for (ChunkInfo c: storedChunks){
-            int chunkRepDegree = getChunkReplicationDegree(c.getFileId() + "-" + c.getChunkNo());
-            int score = chunkRepDegree - c.getReplicationDegree();
-            chunks.add(new ChunkSortable(c, score));
-        }
-
-        Collections.sort(chunks, Collections.reverseOrder());
-
-        return chunks;
-    }*/
-
-    /**
      * Deletes a chunk from the peer's filesystem
      *
      * @param chunkName The name of the chunk
@@ -459,52 +382,10 @@ public class ChunkFileSystemManager implements Serializable{
      */
     public boolean deleteChunkFromFilesystem(String chunkName){
 
-        /*if (!removeFromStoredChunks(chunkName)){
-            return false;
-        }*/
         File f  = new File("files/peer" + Peer.getId() + "/chunks/" + chunkName);
         return f.delete();
     }
 
-    /**
-     * Deletes chunks from the peer's filesystem until they don't occupy more space than the peer's capacity
-     *
-     * @return Returns true if successful, false otherwise
-     */
-    /*
-    public boolean deleteChunksUntilNeeded(){
-        double usedStorage = getUsedStorage();
-        double capacity = (double) this.currentCapacity;
-
-        Vector<ChunkSortable> v = getChunksByDeletePriority();
-        int idx = 0;
-
-        while (usedStorage > capacity && idx < v.size()){
-
-            Chunk c = v.get(idx).getChunk();
-            String chunkName = c.getFileId() + "-" + c.getChunkNo();
-            if (deleteChunkFromFilesystem(chunkName)){
-                usedStorage -= ((double)c.getData().length/1000);
-                decreaseChunkReplicationDegree(chunkName);
-                RemovedMessage m = new RemovedMessage("REMOVED", 1.0, Peer.getId(), c.getFileId(), c.getChunkNo());
-                try{
-                    Peer.getMC().send(m);
-                    Thread.sleep(500);
-                } catch (IOException e){
-                    e.printStackTrace();
-                    return false;
-                } catch (InterruptedException e){
-                    e.printStackTrace();
-                    return false;
-                }
-            }
-            idx++;
-        }
-
-        return true;
-
-    }
-*/
     /**
      * Checks if a chunk is from one of the peer's files
      *
@@ -786,21 +667,6 @@ public class ChunkFileSystemManager implements Serializable{
         buffer.clear();
         return new Chunk(fileId, chunkNo, buf, replicationDegree, Peer.getId());
 
-
-/*
-        FileInputStream fis = new FileInputStream(f);
-
-        fis.getChannel().position(offset);
-        int len = Math.min(64000, (int)(f.length()-offset));
-        byte[] buffer = new byte[len];
-        System.out.println("Offset: " + offset);
-        System.out.println("Chunk no: " + chunkNo);
-        System.out.println("Len: " + len);
-        System.out.println("Data length: " + f.length());
-        int read = fis.read(buffer, 0, len);
-        System.out.println("Bytes read: " + read);
-        return new Chunk(fileId, chunkNo, buffer, replicationDegree, Peer.getId());
-        */
     }
 
     /**
@@ -817,9 +683,6 @@ public class ChunkFileSystemManager implements Serializable{
 
         Vector<Chunk> chunks = new Vector<Chunk>();
 
-        // Max_SIZE -> 5
-        // file length -> 32
-        // NumChunks =
         int numChunks = fileBytes.length / MAX_CHUNK_SIZE + 1;
         int remainder = fileBytes.length % MAX_CHUNK_SIZE;
         String fileId = generateFileId(f);
