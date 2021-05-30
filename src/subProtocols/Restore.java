@@ -29,6 +29,7 @@ public class Restore implements Runnable {
     private FileInfo canRestoreFile(){
         Vector<FileInfo> peerFiles = manager.getPeerFiles();
         for (FileInfo fi: peerFiles){
+            System.out.println("Name: " + fi.getPathName());
             if (fi.getPathName().equals(filename)){
                 return fi;
             }
@@ -74,19 +75,24 @@ public class Restore implements Runnable {
         File folder = new File("files/peer" + Peer.getId() + "/restored");
         folder.mkdir();
 
+        File restored = new File("files/peer" + Peer.getId() + "/restored/" + fileInfo.getPathName());
+        try{
+            restored.createNewFile();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+
         String fileId = fileInfo.getFileId();
 
         boolean done = false;
+        final int MAX_CHUNK_SIZE = 64000;
         int currentChunkNo = 1;
-        Vector<Chunk> restoredChunks = new Vector<Chunk>();
+        //Vector<Chunk> restoredChunks = new Vector<Chunk>();
 
         while(!done){
 
-            // Enviar mensagem a dizer que chunk queremos
             Message m = new Message(MessageType.GETCHUNK, new ChunkInfo(fileId, currentChunkNo, -1, -1, -1, node.getEntry()));
             Vector<FingerTableEntry> targets = manager.getPeersThatHaveChunk(fileId + "-" + currentChunkNo);
-            System.out.println("Targets HEREEEEEEEEEEEEEEEEE");
-            System.out.println(targets.size());
 
             Chunk c = askForChunk(targets, m);
             if (c == null){
@@ -99,14 +105,22 @@ public class Restore implements Runnable {
                 done = true;
             }
 
-            restoredChunks.add(c);
+            try{
+                manager.writeToFile(c.getData(), restored, MAX_CHUNK_SIZE * (currentChunkNo-1));
+            } catch(Exception e){
+                System.out.println("Couldn't write chunk to file!");
+                return;
+            }
+
+            //restoredChunks.add(c);
             currentChunkNo++;
 
+            /*
             try{
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch(InterruptedException e){
                 e.printStackTrace();
-            }
+            }*/
 
         }
 
@@ -114,14 +128,7 @@ public class Restore implements Runnable {
 
         // Check order of the received chunks
 
-        File restored = new File("files/peer" + Peer.getId() + "/restored/" + fileInfo.getPathName());
-        try{
-            restored.createNewFile();
-        } catch(IOException e){
-            e.printStackTrace();
-        }
-
-        manager.writeChunksToFile(restored, restoredChunks);
+        //manager.writeChunksToFile(restored, restoredChunks);
         Peer.serialize();
 
     }

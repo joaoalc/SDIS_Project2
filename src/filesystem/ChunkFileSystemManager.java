@@ -12,13 +12,19 @@ import chordProtocol.FingerTableEntry;
 import peers.Peer;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.CompletionHandler;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 /**
  *  The class ChunkFileSystemManager represents the filesystem of a peer
@@ -263,11 +269,14 @@ public class ChunkFileSystemManager implements Serializable{
      * @param f The information of the file
      */
     public void addBackedUpFile(FileInfo f){
+        System.out.println("BACKING UP FILE");
         FileInfo fi = findBackedUpFile(f.getPathName());
         if (fi != null){
+            System.out.println("FILE ALREADY BACKED UP");
             return;
         }
         backedUpFiles.add(f);
+        System.out.println("FILE BACKED UP");
     }
 
     /**
@@ -515,6 +524,23 @@ public class ChunkFileSystemManager implements Serializable{
         return false;
     }
 
+    public void writeToFile(byte[] data, File f, int offset) throws IOException, RuntimeException{
+        Path path = f.toPath();
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        AsynchronousFileChannel channel = AsynchronousFileChannel.open(path, StandardOpenOption.WRITE);
+        channel.write(buffer, offset, buffer, new CompletionHandler<Integer, ByteBuffer>() {
+            @Override
+            public void completed(Integer result, ByteBuffer attachment) {
+                System.out.println("Writing to file finished");
+            }
+
+            @Override
+            public void failed(Throwable exc, ByteBuffer attachment) {
+                throw new RuntimeException("Writing failed");
+            }
+        });
+    }
+
     /**
      * Stores a chunk on the peer's filesystem
      *
@@ -552,19 +578,15 @@ public class ChunkFileSystemManager implements Serializable{
         File chunkFile = new File(path);
         try{
             chunkFile.createNewFile();
-            if (c.getData().length != 0){
-                FileOutputStream os = new FileOutputStream(chunkFile, false);
-                os.write(c.getData());
-                os.close();
-            }
-            if (c == null){
-                return -1;
-            }
+            writeToFile(c.getData(), chunkFile, 0);
             storedChunks.add(new ChunkInfo(c.getFileId(), c.getChunkNo(), c.getReplicationDegree(), c.getData().length, c.getOriginalPeerId(), c.getOriginalEntry()));
             chunksInFilesystem.add(fileId + "-" + String.valueOf(chunkNo));
-
+        } catch (RuntimeException e){
+            System.out.println("Couldn't write to file!");
+            return -1;
         } catch (IOException e){
             e.printStackTrace();
+            return -1;
         }
         this.addChunkReplicationDegree(c.getFileId() + "-" + c.getChunkNo());
         Peer.serialize();
@@ -743,9 +765,31 @@ public class ChunkFileSystemManager implements Serializable{
         }
     }
 
-    public Chunk getChunkFromFile(File f, int replicationDegree, int chunkNo, String fileId) throws FileNotFoundException, IOException{
-        FileInputStream fis = new FileInputStream(f);
+    public Chunk getChunkFromFile(File f, int replicationDegree, int chunkNo, String fileId) throws IOException{
+        Path p = f.toPath();
+        AsynchronousFileChannel channel = AsynchronousFileChannel.open(p, StandardOpenOption.READ);
         int offset = (chunkNo - 1) * 64000;
+        int len = Math.min(64000, (int)(f.length()-offset));
+        ByteBuffer buffer = ByteBuffer.allocate(len);
+        Chunk c;
+        Future<Integer> operation = channel.read(buffer, offset);
+
+        while(!operation.isDone()){
+            if (operation.isCancelled()){
+                return null;
+            }
+        }
+
+        buffer.flip();
+        byte[] buf = new byte[len];
+        buffer.get(buf);
+        buffer.clear();
+        return new Chunk(fileId, chunkNo, buf, replicationDegree, Peer.getId());
+
+
+/*
+        FileInputStream fis = new FileInputStream(f);
+
         fis.getChannel().position(offset);
         int len = Math.min(64000, (int)(f.length()-offset));
         byte[] buffer = new byte[len];
@@ -756,6 +800,7 @@ public class ChunkFileSystemManager implements Serializable{
         int read = fis.read(buffer, 0, len);
         System.out.println("Bytes read: " + read);
         return new Chunk(fileId, chunkNo, buffer, replicationDegree, Peer.getId());
+        */
     }
 
     /**
