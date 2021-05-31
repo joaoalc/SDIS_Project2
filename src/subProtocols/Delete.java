@@ -1,15 +1,14 @@
 package subProtocols;
 
 import chordProtocol.Node;
-import filesystem.Chunk;
 import filesystem.ChunkFileSystemManager;
 import messages.Message;
 import messages.MessageType;
 import peers.Peer;
 
-import java.io.File;
-import java.util.Vector;
-
+/**
+ *  The class Delete is responsible for executing the delete protocol
+ */
 public class Delete implements Runnable {
 
     private String fileId;
@@ -17,6 +16,13 @@ public class Delete implements Runnable {
     private Node node;
     private ChunkFileSystemManager manager;
 
+    /**
+     * Constructor for the Delete class
+     *
+     * @param filename The name of the file whose chunks are to be deleted
+     * @param fileId The id of the file whose chunks are to be deleted
+     * @param node The current chord node
+     */
     public Delete(String fileId, String filename, Node node){
         this.fileId = fileId;
         this.filename = filename;
@@ -24,9 +30,13 @@ public class Delete implements Runnable {
         manager = Peer.getManager();
     }
 
+    /**
+     * Runs the delete protocol
+     */
     @Override
     public void run() {
 
+        System.out.println("[Peer] Initiating delete protocol.");
         SubProtocolsData content = new SubProtocolsData(Peer.getId());
         content.setFileId(this.fileId);
         Message m = new Message(MessageType.DELETE, content);

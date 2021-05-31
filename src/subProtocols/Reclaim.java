@@ -1,28 +1,40 @@
 package subProtocols;
 
 import chordProtocol.Node;
-import filesystem.Chunk;
 import filesystem.ChunkFileSystemManager;
 import filesystem.ChunkInfo;
 import messages.Message;
 import messages.MessageType;
 import peers.Peer;
 
-import java.io.IOException;
 import java.util.Vector;
 
+/**
+ *  The class Reclaim is responsible for executing the reclaim protocol
+ */
 public class Reclaim implements Runnable {
 
     private int newCapacity;
     private ChunkFileSystemManager manager;
     private Node node;
 
+    /**
+     * Constructor for the Reclaim class
+     *
+     * @param newCapacity The peer's new capacity for storing chunks
+     * @param node The current chord node
+     */
     public Reclaim(int newCapacity, Node node){
         this.newCapacity = newCapacity;
         this.manager = Peer.getManager();
         this.node = node;
     }
 
+    /**
+     * Deletes chunks from the peer's filesystem until the peer's new capacity is satisfied
+     *
+     * @return Returns true if successful, false otherwise
+     */
     private boolean deleteChunksUntilNeeded(){
         double usedStorage = manager.getUsedStorage();
         double capacity = manager.getCurrentCapacity();
@@ -31,12 +43,6 @@ public class Reclaim implements Runnable {
         Vector<ChunkInfo> to_remove = new Vector<ChunkInfo>();
         int idx = 0;
         while (usedStorage > capacity && idx < v.size()){
-
-            System.out.println("Beginning");
-            System.out.println("Used storage " + usedStorage);
-            System.out.println("Capacity: " + capacity);
-            System.out.println("Idx: " + idx);
-            System.out.println("Size: " + v.size());
 
             ChunkInfo ci = v.get(idx);
             String chunkName = ci.getFileId() + "-" + ci.getChunkNo();
@@ -53,11 +59,6 @@ public class Reclaim implements Runnable {
 
             }
             idx++;
-            System.out.println("End");
-            System.out.println("Used storage " + usedStorage);
-            System.out.println("Capacity: " + capacity);
-            System.out.println("Idx: " + idx);
-            System.out.println("Size: " + v.size());
         }
 
         for (ChunkInfo ci: to_remove){
@@ -67,6 +68,9 @@ public class Reclaim implements Runnable {
         return true;
     }
 
+    /**
+     * Runs the reclaim protocol
+     */
     @Override
     public void run() {
         System.out.println("[Peer] Initiating reclaim protocol.");

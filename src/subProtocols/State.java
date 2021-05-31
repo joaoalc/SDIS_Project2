@@ -1,7 +1,6 @@
 package subProtocols;
 
 import chordProtocol.Node;
-import filesystem.Chunk;
 import filesystem.ChunkFileSystemManager;
 import filesystem.ChunkInfo;
 import filesystem.FileInfo;
@@ -9,16 +8,27 @@ import peers.Peer;
 
 import java.util.Vector;
 
+/**
+ *  The class State is responsible for executing the state protocol
+ */
 public class State implements Runnable {
 
     private ChunkFileSystemManager manager;
     private Node node;
 
+    /**
+     * Constructor for the State class
+     *
+     * @param node The current chord node
+     */
     public State(Node node){
         manager = Peer.getManager();
         this.node = node;
     }
 
+    /**
+     * Runs the state protocol
+     */
     @Override
     public void run() {
         String toPrint = "";

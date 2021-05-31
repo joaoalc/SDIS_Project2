@@ -10,16 +10,27 @@ import peers.Peer;
 
 import java.util.Vector;
 
+/**
+ *  The class Inform is run periodically and s responsible for informing the chunks neighbours in the chord ring of its files
+ */
 public class Inform implements Runnable {
 
     private ChunkFileSystemManager manager;
     private Node node;
 
+    /**
+     * Constructor for the Inform class
+     *
+     * @param n The current chord node
+     */
     public Inform(Node n){
         manager = Peer.getManager();
         node = n;
     }
 
+    /**
+     * Runs the inform routine
+     */
     @Override
     public void run() {
 

@@ -12,23 +12,35 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Vector;
 
+/**
+ *  The class MessageHandler is responsible for dealing with a received message
+ */
 public class MessageHandler {
 
     private Node node;
     private Message message;
     private ObjectOutputStream out;
 
+    /**
+     * Constructor for the MessageHandler class
+     *
+     * @param n The current chord node
+     * @param m The received message
+     * @param out The socket's output stream
+     */
     public MessageHandler(Node n, Message m, ObjectOutputStream out){
         node = n;
         message = m;
         this.out = out;
     }
 
+    /**
+     * Calls the method corresponding to the received message's type
+     */
     public void handle(){
 
         switch (message.getType()){
             case FIND_PREDECESSOR:
-                //System.out.println("Received FIND_PREDECESSOR");
                 handleFindPredecessor();
                 break;
             case FIND_SUCCESSOR:
@@ -36,11 +48,9 @@ public class MessageHandler {
                 if (id == -1){
                     throw new RuntimeException("ID is null");
                 }
-                //System.out.println("Received FIND_SUCCESSOR [ID=" + id + "]");
                 handleFindSuccessor(id);
                 break;
             case NOTIFICATION:
-                //System.out.println("Received NOTIFICATION");
                 if (!message.hasData()){
                     throw new RuntimeException("Message doesn't carry the node");
                 }
@@ -48,11 +58,9 @@ public class MessageHandler {
                 handleNotification(n);
                 break;
             case CHECK:
-                //System.out.println("Received CHECK");
                 handleCheck();
                 break;
             case JOIN:
-                //System.out.println("Received JOIN");
                 if (!message.hasData()){
                     throw new RuntimeException("Data not set on join");
                 }
@@ -60,46 +68,51 @@ public class MessageHandler {
                 handleJoin(entry);
                 break;
             case PUTCHUNK:
-                System.out.println("Received PutChunk!");
+                System.out.println("[Handler] Received PUTCHUNK");
                 SubProtocolsData content = message.getContent();
                 handlePutChunk(content);
                 break;
             case DELETE:
-                System.out.println("Received DELETE!");
+                System.out.println("[Handler] Received DELETE");
                 SubProtocolsData deleteContent = message.getContent();
                 handleDelete(deleteContent);
                 break;
             case GETCHUNK:
-                System.out.println("Received GetChunk!");
+                System.out.println("[Handler] Received GETCHUNK");
                 ChunkInfo ci = message.getInfo();
                 handleGetChunk(ci);
                 break;
             case INFOSUCC:
-                System.out.println("Info from successor " + message.getId());
                 SubProtocolsData succInfoContent = message.getContent();
                 handleSuccInfo(succInfoContent);
                 break;
             case INFOPRED:
-                System.out.println("Info from predecessor " + message.getId());
                 SubProtocolsData predInfoContent = message.getContent();
                 handlePredInfo(predInfoContent);
                 break;
             case DECREASE_REP_DEGREE:
-                System.out.println("Received DO_BACKUP");
+                System.out.println("[Handler] Received DECREASE_REP_DEGREE");
                 ChunkInfo chunkInfo = message.getInfo();
                 handleDecreaseRepDegree(chunkInfo);
                 break;
             default:
-                System.out.println("DEFAULT");
                 break;
         }
 
     }
 
+    /**
+     * Sends an answer to the received message
+     *
+     * @param  answer The answer
+     */
     private void sendAnswer(Message answer) throws IOException {
         out.writeObject(answer);
     }
 
+    /**
+     * Handles a FIND_PREDECESSOR message
+     */
     private void handleFindPredecessor(){
         Message answer = new Message(MessageType.PREDECESSOR, node.getPredecessor());
         try{
@@ -109,18 +122,26 @@ public class MessageHandler {
         }
     }
 
+    /**
+     * Handles a FIND_SUCCESSOR message
+     *
+     * @param id The id of the node whose successor is to be found
+     */
     private void handleFindSuccessor(int id){
-        //System.out.println("RECEIVED FIND SUCCESSOR MESSAGE!!");
         FingerTableEntry successor = node.findSuccessor(id);
         Message answer = new Message(MessageType.SUCCESSOR, successor, id);
         try{
             sendAnswer(answer);
-            //System.out.println("Sent answer to find successor");
         } catch (IOException e){
             e.printStackTrace();
         }
     }
 
+    /**
+     * Handles a NOTIFICATION message
+     *
+     * @param n The FingerTableEntry of the node who sent the notification
+     */
     private void handleNotification(FingerTableEntry n){
         node.whenNotified(n);
         Message answer = new Message(MessageType.NOTIFIED);
@@ -131,6 +152,9 @@ public class MessageHandler {
         }
     }
 
+    /**
+     * Handles a CHECK message
+     */
     private void handleCheck(){
         Message answer = new Message(MessageType.ALIVE);
         try{
@@ -140,6 +164,11 @@ public class MessageHandler {
         }
     }
 
+    /**
+     * Handles a JOIN message
+     *
+     * @param entry The FingerTableEntry of the node that wants to join the chord ring
+     */
     private void handleJoin(FingerTableEntry entry){
         FingerTableEntry successor = node.findSuccessor(entry.getId());
         Message answer = new Message(MessageType.SUCCESSOR, successor, entry.getId());
@@ -150,9 +179,12 @@ public class MessageHandler {
         }
     }
 
+    /**
+     * Handles a PUTCHUNK message
+     *
+     * @param content The message's content
+     */
     private void handlePutChunk(SubProtocolsData content){
-
-        //System.out.println("Rep Degree: " + content.getReplicationDegree());
 
         Chunk c = content.getChunk();
         if (c == null){
@@ -162,7 +194,6 @@ public class MessageHandler {
 
         int stored = Peer.getManager().storeChunk(c);
         if (stored == -1){ // If it's my file
-            //System.out.println("My File, backup failed");
             // Backup finished, desired replication degree not achieved
             Message answer = new Message(MessageType.FAILED, content);
             try{
@@ -174,7 +205,6 @@ public class MessageHandler {
         } else if (stored < 0 && stored != -3){
             // Not stored
             // Send to successor
-            //System.out.println("Not stored, sending to successor");
             Message m = new Message(MessageType.PUTCHUNK, content);
             Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
 
@@ -195,9 +225,7 @@ public class MessageHandler {
             answerData.setChunk(content.getChunk());
             answerData.setPeersThatBackedUpChunk(content.getPeersThatBackedUpChunk());
             answerData.setReplicationDegree(newRepDegree);
-            //System.out.println("Backup finished, rep degree achieved, rep degree: " + answerData.getReplicationDegree());
             Message answer = new Message(MessageType.STORED, answerData);
-            //System.out.println("Answer rep degree: " + answer.getContent().getReplicationDegree());
             try{
                 sendAnswer(answer);
             } catch (IOException e){
@@ -208,7 +236,6 @@ public class MessageHandler {
 
         content.setReplicationDegree(newRepDegree);
         // Send to successor
-        //System.out.println("Sending to successor with new rep degree: " + content.getReplicationDegree());
         Message m = new Message(MessageType.PUTCHUNK, content);
         Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
 
@@ -218,18 +245,13 @@ public class MessageHandler {
             e.printStackTrace();
         }
 
-        /*
-        SubProtocolsData answerContent = new SubProtocolsData(Peer.getId());
-        answerContent.setReplicationDegree(content.getReplicationDegree()-1);
-
-        Message answer = new Message(MessageType.STORED, answerContent);
-        try{
-            sendAnswer(answer);
-        } catch (IOException e){
-            e.printStackTrace();
-        }*/
     }
 
+    /**
+     * Handles a DELETE message
+     *
+     * @param content The message's content
+     */
     private void handleDelete(SubProtocolsData content){
 
         int id = content.getSenderId();
@@ -238,7 +260,6 @@ public class MessageHandler {
             return;
         } else if (id == Peer.getId()){
             // Chegou de volta ao original, enviar resposta
-            //System.out.println("Original peer!");
             Message answer = new Message(MessageType.DELETED);
             try{
                 sendAnswer(answer);
@@ -265,7 +286,6 @@ public class MessageHandler {
         Message answer = node.getSender().sendWithAnswer(toForward, node.getFinger(0).getValue());
 
         // Send answer back
-
         try{
             sendAnswer(answer);
         } catch (IOException e){
@@ -274,6 +294,11 @@ public class MessageHandler {
 
     }
 
+    /**
+     * Handles a GETCHUNK message
+     *
+     * @param ci The information of the chunk to get
+     */
     public void handleGetChunk(ChunkInfo ci){
 
         if (ci == null){
@@ -304,24 +329,13 @@ public class MessageHandler {
             }
         }
 
-        // Doesn't have the requested chunk, send GetChunk to successor
-        /*
-        Message m = new Message(MessageType.GETCHUNK, ci);
-        Message answer = node.getSender().sendWithAnswer(m, node.getFinger(0).getValue());
-
-        if (answer == null){
-            System.out.println("Error on restore, answer is null");
-            return;
-        }
-
-        try{
-            sendAnswer(answer);
-        } catch (IOException e){
-            e.printStackTrace();
-        }*/
-
     }
 
+    /**
+     * Handles an INFO_SUCC message
+     *
+     * @param infoContent The message's content
+     */
     private void handleSuccInfo(SubProtocolsData infoContent){
 
         if (infoContent == null){
@@ -330,7 +344,6 @@ public class MessageHandler {
         }
 
         Vector<ChunkInfo> chunks = infoContent.getStoredChunks();
-        System.out.println("Received Info from successor with size " + chunks.size());
         if (chunks == null){
             System.out.println("Error, chunks vector is null.");
         }
@@ -346,6 +359,11 @@ public class MessageHandler {
         Peer.serialize();
     }
 
+    /**
+     * Handles an INFO_PRED message
+     *
+     * @param infoContent The message's content
+     */
     private void handlePredInfo(SubProtocolsData infoContent){
 
         if (infoContent == null){
@@ -354,7 +372,6 @@ public class MessageHandler {
         }
 
         Vector<ChunkInfo> chunks = infoContent.getStoredChunks();
-        System.out.println("Received Info from predecessor with size " + chunks.size());
         if (chunks == null){
             System.out.println("Error, chunks vector is null.");
         }
@@ -370,6 +387,11 @@ public class MessageHandler {
         Peer.serialize();
     }
 
+    /**
+     * Handles a DECREASE_REP_DEGREE message
+     *
+     * @param chunkInfo The information of the chunk whose replication degree will be decreased
+     */
     private void handleDecreaseRepDegree(ChunkInfo chunkInfo){
 
         if (chunkInfo == null){

@@ -1,5 +1,8 @@
 package messages;
 
+/**
+ *  Enumeration to represent the various message types
+ */
 public enum MessageType {
     ALIVE,
     CHECK,

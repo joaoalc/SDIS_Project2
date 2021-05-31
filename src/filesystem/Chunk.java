@@ -25,7 +25,6 @@ public class Chunk implements Comparable<Chunk>, Serializable {
      * @param data The chunk's data
      * @param replicationDegree The desired replication degree for the chunk
      * @param originalPeerId The id of the peer who owns the chunk's file
-     *
      */
     public Chunk(String fileId, int chunkNo, byte[] data, int replicationDegree, int originalPeerId){
         this.fileId = fileId;

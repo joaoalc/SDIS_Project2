@@ -57,10 +57,22 @@ public class ChunkFileSystemManager implements Serializable{
         this.entry = entry;
     }
 
+    /**
+     * Sets a chunk's replication degree
+     *
+     * @param chunkName The name of the chunk
+     * @param repDegree The new replication degree dor the chunk
+     */
     public void setChunkRepDegree(String chunkName, int repDegree){
         chunksCurrentReplicationDegrees.put(chunkName, repDegree);
     }
 
+    /**
+     * Gets a file's desired replication degree
+     *
+     * @param fileId The id of the file
+     * @return Returns the file's desired replication degree or -1 if the file hasn't been backed up
+     */
     public int getFileRepDegree(String fileId){
         for (FileInfo fi: backedUpFiles){
             if (fi.getFileId().equals(fileId)){
@@ -70,6 +82,12 @@ public class ChunkFileSystemManager implements Serializable{
         return -1;
     }
 
+    /**
+     * Gets a file's information from the file's id
+     *
+     * @param fileId The id of the file
+     * @return Returns the file's information or null if the file is not from the current peer
+     */
     public FileInfo getFileInfoFromFileId(String fileId){
         for (FileInfo fi: peerFiles){
             if (fi.getFileId().equals(fileId)){
@@ -79,30 +97,67 @@ public class ChunkFileSystemManager implements Serializable{
         return null;
     }
 
+    /**
+     * Gets a vector containing the peers who have a certain chunk stored
+     *
+     * @param chunkName The name of the chunk
+     * @return Returns a vector containing the peers who have stored the chunk
+     */
     public Vector<FingerTableEntry> getPeersThatHaveChunk(String chunkName){
         return peersThatHaveChunk.getOrDefault(chunkName, null);
     }
 
+    /**
+     * Sets the vector of the peers that have a certain chunk stored
+     *
+     * @param chunkName The name of the chunk
+     * @param vec The vector containing the peers that have stored the chunk
+     */
     public void setPeersThatHaveChunk(String chunkName, Vector<FingerTableEntry> vec){
         peersThatHaveChunk.put(chunkName, vec);
     }
 
+    /**
+     * Setter for the predecessorChunks attribute
+     *
+     * @param  predecessorChunks The new value for the predecessorChunks attribute
+     */
     public void setPredecessorChunks(Vector<ChunkInfo> predecessorChunks){
         this.predecessorChunks = predecessorChunks;
     }
 
+    /**
+     * Setter for the successorChunks attribute
+     *
+     * @param  successorChunks The new value for the successorChunks attribute
+     */
     public void setSuccessorChunks(Vector<ChunkInfo> successorChunks) {
         this.successorChunks = successorChunks;
     }
 
+    /**
+     * Getter for the predecessorChunks attribute
+     *
+     * @return Returns the predecessorChunks attribute
+     */
     public Vector<ChunkInfo> getPredecessorChunks() {
         return predecessorChunks;
     }
 
+    /**
+     * Getter for the successorChunks attribute
+     *
+     * @return Returns the successorChunks attribute
+     */
     public Vector<ChunkInfo> getSuccessorChunks() {
         return successorChunks;
     }
 
+    /**
+     * Getter for the peerFiles attribute
+     *
+     * @return Returns the peerFiles attribute
+     */
     public Vector<FileInfo> getPeerFiles() {
         return peerFiles;
     }
@@ -405,6 +460,13 @@ public class ChunkFileSystemManager implements Serializable{
         return false;
     }
 
+    /**
+     * Writes the received data to a file at a given offset
+     *
+     * @param data The data to be written to the file
+     * @param f The file to write the data to
+     * @param offset The position of the file where the data should be written
+     */
     public void writeToFile(byte[] data, File f, int offset) throws IOException, RuntimeException{
         Path path = f.toPath();
         ByteBuffer buffer = ByteBuffer.wrap(data);
@@ -646,6 +708,15 @@ public class ChunkFileSystemManager implements Serializable{
         }
     }
 
+    /**
+     * Gets a certain chunk from a file
+     *
+     * @param f The file
+     * @param replicationDegree The chunk's desired replication degree
+     * @param chunkNo The chunk's sequence number on the file
+     * @param fileId The id of the file
+     * @return Returns the requested chunk, or null if something fails
+     */
     public Chunk getChunkFromFile(File f, int replicationDegree, int chunkNo, String fileId) throws IOException{
         Path p = f.toPath();
         AsynchronousFileChannel channel = AsynchronousFileChannel.open(p, StandardOpenOption.READ);

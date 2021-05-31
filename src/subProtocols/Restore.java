@@ -14,22 +14,35 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
 
+/**
+ *  The class Restore is responsible for executing the restore protocol
+ */
 public class Restore implements Runnable {
 
     private String filename;
     private ChunkFileSystemManager manager;
     private Node node;
 
+    /**
+     * Constructor for the Restore class
+     *
+     * @param filename The name of the file to be restored
+     * @param node The current chord node
+     */
     public Restore(String filename, Node node){
         this.filename = filename;
         this.manager = Peer.getManager();
         this.node = node;
     }
 
+    /**
+     * Checks if the requested file can be restored or not
+     *
+     * @return Returns the information of the requested file if it can be restored, null otherwise
+     */
     private FileInfo canRestoreFile(){
         Vector<FileInfo> peerFiles = manager.getPeerFiles();
         for (FileInfo fi: peerFiles){
-            System.out.println("Name: " + fi.getPathName());
             if (fi.getPathName().equals(filename)){
                 return fi;
             }
@@ -37,6 +50,13 @@ public class Restore implements Runnable {
         return null;
     }
 
+    /**
+     * Asks the peers that had previously stored a certain chunk for it
+     *
+     * @param targets The peers that had previously stored the chunk
+     * @param m The message to be sent to the other peers
+     * @return Returns the requested chunk, null if the operation fails
+     */
     private Chunk askForChunk(Vector<FingerTableEntry> targets, Message m){
 
         for (FingerTableEntry entry: targets) {
@@ -61,9 +81,12 @@ public class Restore implements Runnable {
         return null;
     }
 
+    /**
+     * Runs the restore protocol
+     */
     @Override
     public void run() {
-        System.out.println("Restore starting");
+        System.out.println("[Peer] Initiating restore protocol.");
 
         FileInfo fileInfo = canRestoreFile();
 
@@ -87,7 +110,6 @@ public class Restore implements Runnable {
         boolean done = false;
         final int MAX_CHUNK_SIZE = 64000;
         int currentChunkNo = 1;
-        //Vector<Chunk> restoredChunks = new Vector<Chunk>();
 
         while(!done){
 

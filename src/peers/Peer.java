@@ -21,16 +21,14 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /*
-Client:
-./peer.sh 1 Peer1 localhost 8000
-./peer.sh 2 Peer2 localhost 8001 localhost 8000
-./test.sh Peer1 BACKUP teste.txt 1
-
-java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer 1 Peer1 localhost 8000
-java -Djavax.net.ssl.keyStore=keys/client.keys -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=keys/truststore -Djavax.net.ssl.trustStorePassword=123456 peers.Peer 2 Peer2 localhost 8001 localhost 8000
-java peers.TestApp Peer1 BACKUP teste.txt 1
+    ./peer.sh 1 Peer1 localhost 8000
+    ./peer.sh 2 Peer2 localhost 8001 localhost 8000
+    ./test.sh Peer1 BACKUP teste.txt 1
  */
 
+/**
+ *  The class Peer represents a peer
+ */
 public class Peer implements RMIStub{
 
     private int port;
@@ -40,6 +38,13 @@ public class Peer implements RMIStub{
     private static int id;
     private static ChunkFileSystemManager manager;
 
+    /**
+     * Constructor for the Peer class
+     *
+     * @param address The peer's address
+     * @param port The peer's port
+     * @param id The peer's id
+     */
     public Peer(String address, int port, int id){
         this.address = address;
         this.port = port;
@@ -69,14 +74,18 @@ public class Peer implements RMIStub{
         return manager;
     }
 
-    public int getPort(){
-        return port;
-    }
-
+    /**
+     * Getter for the node attribute
+     *
+     * @return Returns the node attribute
+     */
     public Node getNode(){
         return node;
     }
 
+    /**
+     * Starts the peer's periodic threads
+     */
     public void start(){
 
         Executor executor = Executors.newSingleThreadExecutor();
@@ -100,6 +109,11 @@ public class Peer implements RMIStub{
 
     }
 
+    /**
+     * Entry point for running a peer
+     *
+     * @param args The command-line arguments received
+     */
     public static void main(String[] args){
 
         System.out.println(args.length);
@@ -136,7 +150,12 @@ public class Peer implements RMIStub{
 
     }
 
-
+    /**
+     * Triggers a backup protocol
+     *
+     * @param file The name of the file to be backed up
+     * @param replicationDegree The desired replication degree for the file
+     */
     @Override
     public void backup(String file, int replicationDegree) throws RemoteException {
 
@@ -145,6 +164,11 @@ public class Peer implements RMIStub{
 
     }
 
+    /**
+     * Triggers a delete protocol
+     *
+     * @param file The name of the file whose chunks are to be deleted
+     */
     @Override
     public void delete(String file) throws RemoteException {
         File f = new File("files/peer" + id + "/peer_files/" + file);
@@ -161,18 +185,31 @@ public class Peer implements RMIStub{
 
     }
 
+    /**
+     * Triggers a restore protocol
+     *
+     * @param file The name of the file to be restored
+     */
     @Override
     public void restore(String file) throws RemoteException {
         Restore protocol = new Restore(file, node);
         node.getThreadExecutor().execute(protocol);
     }
 
+    /**
+     * Triggers a reclaim protocol
+     *
+     * @param newCapacity The peer's new capacity for storing chunks
+     */
     @Override
     public void reclaim(int newCapacity) throws RemoteException {
         Reclaim protocol = new Reclaim(newCapacity, node);
         node.getThreadExecutor().execute(protocol);
     }
 
+    /**
+     * Triggers a state protocol
+     */
     @Override
     public void state() throws RemoteException {
         State protocol = new State(node);

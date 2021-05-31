@@ -9,12 +9,21 @@ import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ *  The class MessageReceiver is responsible for receiving incoming connections
+ */
 public class MessageReceiver implements Runnable {
 
     private SSLServerSocket s;
     private ExecutorService executor;
     private Node node;
 
+    /**
+     * Constructor for the MessageReceiver class
+     *
+     * @param port The port where to listen for incoming connections
+     * @param n The current chord node
+     */
     public MessageReceiver(int port, Node n){
         try{
             s = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
@@ -27,6 +36,9 @@ public class MessageReceiver implements Runnable {
         node = n;
     }
 
+    /**
+     * Receives a connection
+     */
     public void receiveConnection(){
         try{
             SSLSocket sslSocket = (SSLSocket) s.accept();
@@ -36,6 +48,9 @@ public class MessageReceiver implements Runnable {
         }
     }
 
+    /**
+     * Listens for connections and handles them when received
+     */
     public void run(){
 
         while(true){

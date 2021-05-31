@@ -5,12 +5,23 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
 
+/**
+ *  The class MessageSender is responsible for sending messages
+ */
 public class MessageSender {
 
+    /**
+     * Constructor for the MessageSender class
+     */
     public MessageSender(){
-
     }
 
+    /**
+     * Sends a message to the received address and waits for a response
+     *
+     * @param message The message to be sent
+     * @param address The address to send the message to
+     */
     public Message sendWithAnswer(Message message, InetSocketAddress address){
 
         SSLSocket s = null;
