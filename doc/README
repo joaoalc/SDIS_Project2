@@ -1,0 +1,41 @@
+
+# Compiling
+
+We provide a script that compiles the project. The script is called compile.sh and is located under the scripts directory.
+This script should be executed without any arguments, from its location, inside the scripts directory, and the compiled code will be placed
+under the build directory inside the src folder.
+
+
+# Running
+
+Firstly, it is necessary to start the RMI. For this, we provide a script called startRMI.sh, located inside the build directory.
+This script starts the RMI when executed with no arguments.
+
+If you wish to run a peer, you can execute the peer.sh script, located inside the build directory. The script should be run as follows:
+./peer.sh <peer_id> <svc_access_point> <peer_address> <peer_port> [<known_peer_address> <known_peer_port>],
+where the arguments inside square brackets are optional.
+The arguments meanings are the following:
+* peer_id - The id of the peer to be run
+* svc_access_point - The access point to access the peer from RMI
+* peer_address - The address of the peer (localhost, for example)
+* peer_port - The port of the peer (8000, for example)
+* known_peer_address - The address of a known peer from a chord ring
+* known_peer_port - The port of the known peer from the chord ring
+
+In order to run a peer that will create a new chord ring, you don't need to pass to the script the optional arguments.
+However, if you wish to run a peer that should join an existing chord ring, you have to pass as arguments the address and port of a known peer from that chord ring.
+Here is an example of the commands that should be run to create a chord ring with three peers:
+- ./peer.sh 1 Peer1 localhost 8000  (creates the ring)
+- ./peer.sh 2 Peer2 localhost 8001 localhost 8000  (joins the ring created by Peer1)
+- ./peer.sh 3 Peer3 localhost 8002 localhost 8000  (joins the ring created by Peer1)
+
+If you wish to trigger a protocol on one of the peers, we provide a script called test.sh, located inside the build directory, for this matter.
+This script runs the client application and is run as follows:
+./test.sh <peer_ap> BACKUP|RESTORE|DELETE|RECLAIM|STATE [<opnd_1> [<opnd_2>]]
+
+Here is an example for each protocol:
+* Backup - ./test.sh Peer1 BACKUP some_file.txt 1
+* Restore - ./test.sh Peer1 RESTORE some_file.txt
+* Delete - ./test.sh Peer1 DELETE some_file.txt
+* Reclaim - ./test.sh Peer1 RECLAIM 0
+* State - ./test.sh Peer1 STATE
