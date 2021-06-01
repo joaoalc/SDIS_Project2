@@ -38,7 +38,7 @@ public class Node {
         fingerTable = new FingerTableEntry[M];
         this.predecessor = null;
         this.sender = new MessageSender();
-        threadExecutor = Executors.newFixedThreadPool(5);
+        threadExecutor = Executors.newFixedThreadPool(10);
         initFingerTable();
     }
 
@@ -225,23 +225,19 @@ public class Node {
             // Send message to closest node to find successor
             Message m = new Message(MessageType.FIND_SUCCESSOR, id);
             Message ans = sender.sendWithAnswer(m, closest.getValue());
-
             if (ans == null){
                 return null;
             }
-
             if (!ans.isSuccessorMessage()){
                 System.out.println("Error on finding successor [Message doesn't match expected type].");
                 System.out.println("Current node: " + this.id + ".  Target Node: " + id + ".");
                 return null;
             }
-
             if (!ans.hasData()){
                 System.out.println("Error on finding successor [Successor is null].");
                 System.out.println("Current node: " + this.id + ".  Target Node: " + id + ".");
                 return null;
             }
-
             return ans.getData();
         }
     }

@@ -26,8 +26,19 @@ public class MessageSender {
 
         SSLSocket s = null;
 
+        if (message == null){
+            System.out.println("Received message is null!!!!!");
+        }
+
+        if (address == null){
+            System.out.println("Received address is null!!!!");
+        }
+
         try{
-            s = (SSLSocket) SSLSocketFactory.getDefault().createSocket(address.getAddress(), address.getPort());
+            s = (SSLSocket) SSLSocketFactory.getDefault().createSocket(
+                    address.getAddress(),
+                    address.getPort()
+            );
             ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
             out.writeObject(message);
         } catch(IOException e){

@@ -96,10 +96,8 @@ public class Peer implements RMIStub{
         Stabilization stabilization = new Stabilization(node);
         scheduledExecutor.scheduleAtFixedRate(stabilization, 1, 2, TimeUnit.SECONDS);
 
-
         FixFingers fixFingers = new FixFingers(node);
         scheduledExecutor.scheduleAtFixedRate(fixFingers, 2, 2, TimeUnit.SECONDS);
-
 
         CheckPredecessorFailure checkPredecessorFailure = new CheckPredecessorFailure(node);
         scheduledExecutor.scheduleAtFixedRate(checkPredecessorFailure, 3, 2, TimeUnit.SECONDS);

@@ -28,11 +28,13 @@ public class MessageReceiver implements Runnable {
         try{
             s = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
             s.setNeedClientAuth(true);
-            s.setEnabledCipherSuites(((SSLServerSocketFactory) SSLServerSocketFactory.getDefault()).getSupportedCipherSuites());
+            s.setEnabledCipherSuites(
+                    ((SSLServerSocketFactory) SSLServerSocketFactory.getDefault()).getSupportedCipherSuites()
+            );
         } catch (IOException e){
             e.printStackTrace();
         }
-        executor = Executors.newFixedThreadPool(10);
+        executor = Executors.newFixedThreadPool(20);
         node = n;
     }
 

@@ -109,7 +109,9 @@ public class Backup implements Runnable {
                         attachment.get(chunkBytes);
                         attachment.clear();
 
-                        runSingleBackup(new Chunk(fileId, chunkNo, chunkBytes, replicationDegree, node.getEntry().getId()));
+                        Chunk c1 = new Chunk(fileId, chunkNo, chunkBytes, replicationDegree, node.getEntry().getId());
+                        c1.setOriginalEntry(node.getEntry());
+                        runSingleBackup(c1);
 
                     }
 
@@ -166,11 +168,12 @@ public class Backup implements Runnable {
                 Peer.serialize();
                 return;
             } else if (receivedRepDegree > 0){
+                manager.setChunkRepDegree(fileId + "-" + chunk.getChunkNo(), chunk.getReplicationDegree() - receivedRepDegree);
                 System.out.println("Error while backing up, cant achieve the desired replication degree on chunk " + chunk.getChunkNo());
                 Peer.serialize();
                 return;
             }
-            manager.setChunkRepDegree(fileId + "-" + chunk.getChunkNo(), receivedRepDegree);
+            manager.setChunkRepDegree(fileId + "-" + chunk.getChunkNo(), chunk.getReplicationDegree());
         } else {
             System.out.println("Error on messages");
             Peer.serialize();
@@ -190,14 +193,13 @@ public class Backup implements Runnable {
         String fileId = parts[0];
         int chunkNo = Integer.parseInt(parts[1]);
         FileInfo info = manager.getFileInfoFromFileId(fileId);
-        System.out.println("FileId: " + fileId);
-        System.out.println("Info: " + info);
         File f = new File("files/peer" + Peer.getId() + "/peer_files/" + info.getPathName());
 
         Chunk chunk = null;
 
         try{
             chunk = manager.getChunkFromFile(f, info.getReplicationDegree(), chunkNo, fileId);
+            chunk.setOriginalEntry(node.getEntry());
         } catch (Exception e){
             e.printStackTrace();
             return;
@@ -226,7 +228,6 @@ public class Backup implements Runnable {
             manager.setPeersThatHaveChunk(fileId + "-" + chunk.getChunkNo(), peersThatStored);
 
             int receivedRepDegree = c.getReplicationDegree();
-            System.out.println("Received replication degree: " + receivedRepDegree);
             if (receivedRepDegree == -1){
                 System.out.println("Rep degree wrong");
                 Peer.serialize();

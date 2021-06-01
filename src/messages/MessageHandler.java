@@ -191,7 +191,6 @@ public class MessageHandler {
             System.out.println("Chunk is null");
             return;
         }
-
         int stored = Peer.getManager().storeChunk(c);
         if (stored == -1){ // If it's my file
             // Backup finished, desired replication degree not achieved
@@ -394,6 +393,8 @@ public class MessageHandler {
      */
     private void handleDecreaseRepDegree(ChunkInfo chunkInfo){
 
+        System.out.println("Received DECREASE_REP_DEGREE!!!!!!!!");
+
         if (chunkInfo == null){
             System.out.println("ChunkInfo is null.");
             return;
@@ -416,7 +417,7 @@ public class MessageHandler {
 
         if (currentChunkRepDegree < fileRepDegree){
             try{
-                Thread.sleep(4000);
+                Thread.sleep(6000);
             } catch(InterruptedException e){
                 return;
             }

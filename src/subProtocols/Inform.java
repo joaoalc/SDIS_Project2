@@ -45,9 +45,6 @@ public class Inform implements Runnable {
         if (successor == null){
             System.out.println("Successor is null, not sending info.");
         } else {
-            System.out.println("My ip: " + node.getEntry().getValue());
-            System.out.println("Successor ip: " + successor.getValue());
-            System.out.println("Sending info to successor (" + successor.getId() + ") with size " + chunks.size());
             answer = node.getSender().sendWithAnswer(m, successor.getValue());
             if (answer == null){
                 System.out.println("Couldn't send peer's information to the successor.");
@@ -60,8 +57,6 @@ public class Inform implements Runnable {
         if (predecessor == null){
             System.out.println("Predecessor is null, not sending info.");
         } else {
-            System.out.println("Predecessor ip: " + predecessor.getValue());
-            System.out.println("Sending info to predecessor (" + predecessor.getId() + ") with size " + chunks.size());
             answer = node.getSender().sendWithAnswer(m2, predecessor.getValue());
             if (answer == null){
                 System.out.println("Couldn't send peer's information to the predecessor.");

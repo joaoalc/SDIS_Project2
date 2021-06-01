@@ -37,24 +37,30 @@ public class CheckPredecessorFailure implements Runnable {
 
         // If it is not alive
         if (ans == null){
-            // Backup the peer's chunks again
-            Vector<ChunkInfo> chunks = Peer.getManager().getPredecessorChunks();
-            for (ChunkInfo ci: chunks){
-                System.out.println("Starting backup for chunk " + ci.getFileId() + "-" + ci.getChunkNo());
 
-                FingerTableEntry entry = ci.getEntry();
-                if (entry == null){
-                    System.out.println("Entry is null.");
-                    return;
-                }
-                Message m1 = new Message(MessageType.DECREASE_REP_DEGREE, ci);
-                Message answer = node.getSender().sendWithAnswer(m1, entry.getValue());
-                if (answer == null){
-                    System.out.println("Answer is null");
-                    return;
-                }
+            Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    // Backup the peer's chunks again
+                    Vector<ChunkInfo> chunks = Peer.getManager().getPredecessorChunks();
+                    for (ChunkInfo ci: chunks){
+                        FingerTableEntry entry = ci.getEntry();
+                        if (entry == null){
+                            System.out.println("Entry is null.");
+                            return;
+                        }
+                        Message m1 = new Message(MessageType.DECREASE_REP_DEGREE, ci);
+                        Message answer = node.getSender().sendWithAnswer(m1, entry.getValue());
+                        if (answer == null){
+                            System.out.println("Answer is null");
+                            return;
+                        }
 
-            }
+                    }
+                }
+            });
+
+            t.start();
 
             node.resetPredecessor();
         } else if (!ans.isAliveMessage()){

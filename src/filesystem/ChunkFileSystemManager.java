@@ -266,14 +266,11 @@ public class ChunkFileSystemManager implements Serializable{
      * @param f The information of the file
      */
     public void addBackedUpFile(FileInfo f){
-        System.out.println("BACKING UP FILE");
         FileInfo fi = findBackedUpFile(f.getPathName());
         if (fi != null){
-            System.out.println("FILE ALREADY BACKED UP");
             return;
         }
         backedUpFiles.add(f);
-        System.out.println("FILE BACKED UP");
     }
 
     /**
@@ -547,22 +544,14 @@ public class ChunkFileSystemManager implements Serializable{
     public int delete(String fileId){
 
         String basePath = "files/peer" + Peer.getId() + "/chunks/";
-        System.out.println("Chunks in filesystem:");
-        for (int i = 0; i < chunksInFilesystem.size(); i++){
-            System.out.println("Chunk: " + chunksInFilesystem.get(i));
-        }
-        System.out.println("FileId: " + fileId);
         Vector<String> to_remove = new Vector<String>();
         for (String chunkName: chunksInFilesystem){
             System.out.println("Target chunk: " + chunkName);
             if (chunkIsFromFile(chunkName, fileId)){
-                System.out.println("Chunk is from file.");
                 File f = new File(basePath + chunkName);
                 if (f.delete()){
-                    System.out.println("Chunk deleted!!!!");
                     removeFromStoredChunks(chunkName);
                     to_remove.add(chunkName);
-                    System.out.println("Deleted chunk " + chunkName);
                 } else {
                     System.out.println("Could not delete chunk " + chunkName);
                 }
