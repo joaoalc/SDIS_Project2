@@ -206,6 +206,7 @@ public class Backup implements Runnable {
         }
 
         SubProtocolsData content = new SubProtocolsData(Peer.getId());
+        System.out.println("");
         content.setChunk(chunk);
         content.setReplicationDegree(info.getReplicationDegree());
         Message m = new Message(MessageType.PUTCHUNK, content);

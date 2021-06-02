@@ -495,7 +495,7 @@ public class ChunkFileSystemManager implements Serializable{
         }
 
         double notUsedStorage = getNotUsedStorage();
-        if (c.getData().length > notUsedStorage*1000){
+        if (c.getData().length > notUsedStorage*1000 || currentCapacity <= 0.5){
             System.out.println("Can't store chunk, not enough space...");
             return -2;
         }

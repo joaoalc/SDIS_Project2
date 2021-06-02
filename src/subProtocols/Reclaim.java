@@ -39,11 +39,41 @@ public class Reclaim implements Runnable {
         double usedStorage = manager.getUsedStorage();
         double capacity = manager.getCurrentCapacity();
 
+        if (capacity <= 0.5){
+            Vector<ChunkInfo> v = manager.getStoredChunks();
+            Vector<ChunkInfo> to_remove = new Vector<ChunkInfo>();
+
+            int idx = 0;
+            while (idx < v.size()){
+                ChunkInfo ci = v.get(idx);
+                String chunkName = ci.getFileId() + "-" + ci.getChunkNo();
+                if (manager.deleteChunkFromFilesystem(chunkName)){
+                    to_remove.add(ci);
+                    System.out.println("Deleted chunk " + chunkName);
+                    usedStorage -= ((double)ci.getDataLength()/1000);
+                    Message m = new Message(MessageType.DECREASE_REP_DEGREE, ci);
+                    Message answer = node.getSender().sendWithAnswer(m, ci.getEntry().getValue());
+                    if (answer == null){
+                        System.out.println("Error on reclaim, answer is null...");
+                        return false;
+                    }
+
+                }
+                idx++;
+            }
+
+            for (ChunkInfo ci: to_remove){
+                manager.removeFromStoredChunks(ci.getFileId() + "-" + ci.getChunkNo());
+            }
+
+            return true;
+
+        }
+
         Vector<ChunkInfo> v = manager.getStoredChunks();
         Vector<ChunkInfo> to_remove = new Vector<ChunkInfo>();
         int idx = 0;
         while (usedStorage > capacity && idx < v.size()){
-
             ChunkInfo ci = v.get(idx);
             String chunkName = ci.getFileId() + "-" + ci.getChunkNo();
             if (manager.deleteChunkFromFilesystem(chunkName)){
